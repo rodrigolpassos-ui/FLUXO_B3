@@ -257,6 +257,9 @@ Terra	12,90	-465330904	-13079"></textarea>
   <div class="top-bar-right">
     <span class="top-bar-time" id="clock">—</span>
     <button class="btn btn-blue" id="btn-open">⬆ Importar Dados da Planilha</button>
+    <button class="btn" id="btn-export">💾 Exportar backup</button>
+    <button class="btn" id="btn-import">📂 Importar backup</button>
+    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
     <button class="btn" id="btn-clear-panels">🗑 Limpar painéis</button>
     <button class="theme-toggle" id="btn-theme" title="Alternar tema claro/escuro" aria-label="Alternar tema">
       <span class="theme-ico" id="theme-ico">☀</span>
@@ -947,6 +950,90 @@ document.getElementById('btn-theme').addEventListener('click', ()=>{
   applyTheme(currentTheme() === 'dark' ? 'light' : 'dark');
 });
 updateThemeIcon();
+
+// ─── EXPORTAR / IMPORTAR BACKUP ───────────────────────────────────────────────
+// Empacota tudo que fica salvo no navegador num arquivo .json, para levar a outro PC.
+const BACKUP_KEYS = ['fluxo_raw_v1','fluxo_semanal_v2','fluxo_semanal_v1','fluxo_theme'];
+
+function exportBackup(){
+  const data = {};
+  try{
+    for(const k of BACKUP_KEYS){
+      const v = localStorage.getItem(k);
+      if(v !== null) data[k] = v;   // guarda como string crua (já é JSON ou texto)
+    }
+  }catch(e){}
+  const payload = {
+    _app: 'fluxo-financeiro',
+    _version: 1,
+    _exportedAt: new Date().toISOString(),
+    store: data
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date();
+  const stamp = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  a.href = url;
+  a.download = 'fluxo-backup-'+stamp+'.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+function applyImportedStore(store){
+  // grava cada chave conhecida no localStorage
+  let count = 0;
+  for(const k of BACKUP_KEYS){
+    if(Object.prototype.hasOwnProperty.call(store, k)){
+      try{ localStorage.setItem(k, store[k]); count++; }catch(e){}
+    }
+  }
+  // recarrega o estado em memória a partir do que foi gravado
+  try{ weekState = loadWeek(); }catch(e){}
+  // limpa os painéis na tela antes de restaurar (evita resíduo do estado anterior)
+  try{ ['win','wdo','atv'].forEach(resetPanelDom); }catch(e){}
+  try{ restorePanels(); }catch(e){}
+  try{ renderWeekly(); }catch(e){}
+  // aplica o tema importado, se houver
+  try{
+    const t = localStorage.getItem('fluxo_theme');
+    applyTheme(t === 'dark' ? 'dark' : 'light');
+  }catch(e){}
+  return count;
+}
+
+function importBackupFromFile(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let parsed;
+    try{ parsed = JSON.parse(reader.result); }
+    catch(e){ alert('Arquivo inválido: não é um JSON válido.'); return; }
+    // aceita tanto o formato { _app, store:{...} } quanto um objeto direto de chaves
+    let store = null;
+    if(parsed && parsed.store && typeof parsed.store === 'object') store = parsed.store;
+    else if(parsed && typeof parsed === 'object') store = parsed;
+    if(!store){ alert('Arquivo de backup não reconhecido.'); return; }
+    // confere se tem ao menos uma chave esperada
+    const hasAny = BACKUP_KEYS.some(k=>Object.prototype.hasOwnProperty.call(store,k));
+    if(!hasAny){ alert('Este arquivo não contém dados do dashboard.'); return; }
+    if(!confirm('Importar este backup? Os dados atuais deste navegador serão substituídos pelos do arquivo.')) return;
+    const n = applyImportedStore(store);
+    alert('Backup importado com sucesso ('+n+' conjunto(s) de dados restaurados).');
+  };
+  reader.onerror = ()=>alert('Não foi possível ler o arquivo.');
+  reader.readAsText(file);
+}
+
+document.getElementById('btn-export').addEventListener('click', exportBackup);
+document.getElementById('btn-import').addEventListener('click', ()=>{
+  document.getElementById('file-import').click();
+});
+document.getElementById('file-import').addEventListener('change', function(){
+  if(this.files && this.files[0]) importBackupFromFile(this.files[0]);
+  this.value = '';   // permite reimportar o mesmo arquivo depois
+});
 </script>
 </body>
 </html>
