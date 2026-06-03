@@ -183,6 +183,18 @@ body{padding:12px}
 .weekly-empty{padding:24px 14px;text-align:center;color:var(--text3);font-size:10px;line-height:1.9}
 .weekly-empty strong{display:block;color:var(--text2);font-size:11px;margin-bottom:3px}
 
+/* ===== FLUXO SEMANAL: 2 ATIVOS LADO A LADO ===== */
+.weekly-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.weekly-col{background:var(--bg2);min-width:0}
+.weekly-col-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 14px 6px}
+.weekly-col-head .wcap{font-size:11px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.btn-mini{font-size:9px;padding:3px 8px}
+.weekly-col .wtbl{min-width:0}
+.weekly-col .wtbl th{padding:6px 9px;font-size:8px;letter-spacing:.3px}
+.weekly-col .wtbl td{padding:5px 9px;font-size:9px}
+.weekly-col .wtbl tr.wtoday td:first-child::after{content:'•';margin-left:4px}
+@media(max-width:760px){.weekly-grid{grid-template-columns:1fr}}
+
 @media(max-width:1100px){.dash{grid-template-columns:1fr 1fr}}
 @media(max-width:740px){
   .dash{grid-template-columns:1fr}
@@ -434,19 +446,23 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="wsub">Saldo líquido (R$) acumulado a cada importação, por dia da semana</div>
       </div>
       <div class="weekly-actions">
-        <select class="weekly-select" id="weekly-asset">
-          <option value="win">Dólar (WIN)</option>
-          <option value="wdo">Índice (WDO)</option>
-          <option value="atv">Ativo Livre</option>
-        </select>
-        <button class="btn" id="btn-undo-today" title="Remove a última importação registrada hoje no ativo selecionado">↶ Desfazer import. de hoje</button>
         <button class="btn" id="btn-clear-week">Limpar semana</button>
       </div>
     </div>
-    <div id="weekly-body">
-      <div class="weekly-empty">
-        <strong>Sem dados na semana</strong>
-        Importe os dados de um ativo — o saldo do dia atual entra automaticamente nesta tabela.
+    <div class="weekly-grid">
+      <div class="weekly-col">
+        <div class="weekly-col-head">
+          <span class="wcap">📈 Índice (WDO)</span>
+          <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada hoje no WDO">↶ Desfazer hoje</button>
+        </div>
+        <div id="weekly-body-wdo"></div>
+      </div>
+      <div class="weekly-col">
+        <div class="weekly-col-head">
+          <span class="wcap">💵 Dólar (WIN)</span>
+          <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada hoje no WIN">↶ Desfazer hoje</button>
+        </div>
+        <div id="weekly-body-win"></div>
       </div>
     </div>
     <div class="weekly-foot">
@@ -842,9 +858,8 @@ function recordWeekly(prefix, groups){
   renderWeekly();
 }
 
-// Desfaz a última importação registrada hoje no ativo selecionado.
-function undoTodayImport(){
-  const asset = document.getElementById('weekly-asset').value;
+// Desfaz a última importação registrada hoje no ativo indicado.
+function undoTodayImport(asset){
   const dk = todayKey();
   const day = weekState[asset] && weekState[asset][dk];
   if(!day || !day.hist.length){ return; }
@@ -856,70 +871,65 @@ function undoTodayImport(){
   renderWeekly();
 }
 
-function renderWeekly(){
-  const asset = document.getElementById('weekly-asset').value;
-  const data  = weekState[asset] || {};
-  const body  = document.getElementById('weekly-body');
-  const days  = DAY_KEYS.filter(d=>data[d]);
+// Renderiza a tabela semanal de UM ativo dentro do container informado.
+function renderWeeklyAsset(asset, bodyId, undoId){
+  const data = weekState[asset] || {};
+  const body = document.getElementById(bodyId);
+  const days = DAY_KEYS.filter(d=>data[d]);
+  const tk   = todayKey();
 
   if(!days.length){
-    body.innerHTML = `<div class="weekly-empty"><strong>Sem dados para este ativo na semana</strong>
-      Importe os dados — o saldo do dia atual é somado automaticamente aqui.</div>`;
-    document.getElementById('weekly-updated').textContent = weekState.updated ? 'Atualizado: '+weekState.updated : '—';
-    return;
+    body.innerHTML = `<div class="weekly-empty"><strong>Sem dados na semana</strong>
+      Importe os dados deste ativo — o saldo do dia é somado aqui.</div>`;
+  } else {
+    let h = `<div class="wtbl-wrap"><table class="wtbl"><thead><tr>
+      <th>Dia</th><th>Estr.</th><th>Banc.</th><th>PF</th><th>Outros</th>
+      <th>Saldo</th><th>Imp.</th></tr></thead><tbody>`;
+    const totals = { EXT:0, INST:0, PF:0, OUT:0 };
+    for(const dk of DAY_KEYS){
+      const day = data[dk];
+      const isToday = dk===tk;
+      if(!day){
+        h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>
+          <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
+          <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
+          <td class="wcell-empty">—</td><td class="wcell-empty">—</td></tr>`;
+        continue;
+      }
+      let rowTot = 0, cells = '';
+      for(const g of GRP_ORDER){
+        const v = day.sum[g] || 0; rowTot += v; totals[g] += v;
+        cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
+      }
+      h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${day.hist.length}×</td></tr>`;
+    }
+    const grandTot = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
+    let totCells = '';
+    for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
+    h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grandTot)}">${fmtV(grandTot)}</td><td></td></tr>`;
+    h += `</tbody></table></div>`;
+    body.innerHTML = h;
   }
 
-  const tk = todayKey();
-  let h = `<div class="wtbl-wrap"><table class="wtbl"><thead><tr>
-    <th>Dia</th>
-    <th>Estrangeiro</th><th>Bancos</th><th>Pess. Física</th><th>Outros</th>
-    <th>Saldo Total</th><th>Imports</th></tr></thead><tbody>`;
-
-  const totals = { EXT:0, INST:0, PF:0, OUT:0 };
-
-  for(const dk of DAY_KEYS){
-    const day = data[dk];
-    const isToday = dk===tk;
-    if(!day){
-      h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>
-        <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
-        <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
-        <td class="wcell-empty">—</td><td class="wcell-empty">—</td></tr>`;
-      continue;
-    }
-    let rowTot = 0;
-    let cells = '';
-    for(const g of GRP_ORDER){
-      const v = day.sum[g] || 0; rowTot += v; totals[g] += v;
-      cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
-    }
-    const nImp = day.hist.length;
-    h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${nImp}×</td></tr>`;
-  }
-
-  // linha de total
-  const grandTot = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
-  let totCells = '';
-  for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
-  h += `<tr class="wtotal"><td>Total semana</td>${totCells}<td class="${cc(grandTot)}">${fmtV(grandTot)}</td><td></td></tr>`;
-
-  h += `</tbody></table></div>`;
-  body.innerHTML = h;
-
-  // habilita/desabilita o botão de desfazer conforme há importações hoje
-  const todayDay = data[tk];
-  const undoBtn = document.getElementById('btn-undo-today');
+  // habilita/desabilita o botão de desfazer deste ativo
+  const undoBtn = document.getElementById(undoId);
   if(undoBtn){
-    const can = !!(todayDay && todayDay.hist.length);
+    const can = !!(data[tk] && data[tk].hist.length);
     undoBtn.disabled = !can;
     undoBtn.style.opacity = can ? '1' : '.45';
     undoBtn.style.cursor  = can ? 'pointer' : 'not-allowed';
   }
+}
+
+// Renderiza os dois ativos (WDO e WIN) lado a lado.
+function renderWeekly(){
+  renderWeeklyAsset('wdo', 'weekly-body-wdo', 'btn-undo-wdo');
+  renderWeeklyAsset('win', 'weekly-body-win', 'btn-undo-win');
   document.getElementById('weekly-updated').textContent = weekState.updated ? 'Atualizado: '+weekState.updated : '—';
 }
 
-document.getElementById('weekly-asset').addEventListener('change', renderWeekly);
-document.getElementById('btn-undo-today').addEventListener('click', undoTodayImport);
+document.getElementById('btn-undo-wdo').addEventListener('click', ()=>undoTodayImport('wdo'));
+document.getElementById('btn-undo-win').addEventListener('click', ()=>undoTodayImport('win'));
 document.getElementById('btn-clear-week').addEventListener('click', ()=>{
   if(confirm('Limpar todos os dados da semana (todos os ativos)?')){
     weekState = { win:{}, wdo:{}, atv:{}, updated:null };
