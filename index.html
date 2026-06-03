@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluxo de Participantes — WIN / WDO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0d12;--bg2:#141920;--bg3:#1c222b;
+  --border:#2a313c;--border2:#222831;--text:#e6edf3;--text2:#9aa4b2;--text3:#6e7681;
+  --green:#3fb950;--red:#f85149;--blue:#58a6ff;--yellow:#e3b341;--purple:#a371f7;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+html,body{min-height:100%;background:radial-gradient(1200px 600px at 50% -10%,#10151c 0%,var(--bg) 60%);color:var(--text);font-family:'Courier New',Courier,monospace;font-size:11px}
+body{padding:12px}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:5px}
+::-webkit-scrollbar-thumb:hover{background:#3a414d}
+
+/* TOP BAR */
+.top-bar{max-width:1840px;margin:0 auto 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.top-bar-title{font-size:12px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.top-bar-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.top-bar-time{font-size:10px;color:var(--text3);margin-right:4px}
+.btn{font-family:'Courier New',monospace;font-size:10px;padding:5px 12px;border-radius:4px;cursor:pointer;transition:all .15s;border:1px solid var(--border);background:var(--bg3);color:var(--text2)}
+.btn:hover{border-color:var(--blue);color:var(--blue)}
+.btn-blue{background:#0d2a45;border-color:var(--blue);color:var(--blue)}
+.btn-blue:hover{background:#1a3d5c}
+
+/* MODAL */
+.overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:8px;width:100%;max-width:640px;padding:22px}
+.modal h2{font-size:13px;font-weight:700;margin-bottom:6px}
+.modal-desc{font-size:10px;color:var(--text2);line-height:1.7;margin-bottom:14px}
+.modal-desc code{background:var(--bg3);padding:1px 5px;border-radius:3px;color:var(--blue)}
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px}
+.modal-tab{font-size:10px;padding:6px 14px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s}
+.modal-tab.active{color:var(--yellow);border-bottom-color:var(--yellow)}
+.modal-panel{display:none}
+.modal-panel.active{display:block}
+.modal-panel label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:5px}
+.modal-panel textarea{width:100%;height:200px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Courier New',monospace;font-size:10px;padding:10px;border-radius:4px;resize:vertical;outline:none;line-height:1.5}
+.modal-panel textarea:focus{border-color:var(--blue)}
+.modal-panel textarea::placeholder{color:var(--text3)}
+.modal-actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.modal-hint{font-size:9px;color:var(--text3)}
+.modal-btns{display:flex;gap:8px}
+.modal-error{font-size:10px;color:var(--red);margin-top:6px;min-height:16px}
+
+/* DASH */
+.dash{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:1840px;margin:0 auto}
+.top-bar{max-width:1840px!important}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s}
+.panel:hover{border-color:#3a414d}
+
+.panel-header{padding:8px 12px;border-bottom:1px solid var(--border)}
+.panel-title{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.title-left{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700}
+.price-block{text-align:right}
+.price-main{font-size:14px;font-weight:700}
+.price-sub{font-size:10px;margin-top:1px}
+.panel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:6px}
+.stat-box{background:var(--bg3);border-radius:4px;padding:5px 8px}
+.stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:11px;font-weight:700;margin-top:2px}
+
+.sec{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;padding:5px 12px 3px;border-top:1px solid var(--border)}
+
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:9px;color:var(--text2);text-transform:uppercase;padding:3px 12px;text-align:left;font-weight:400;border-bottom:1px solid var(--border)}
+.tbl th.r,.tbl td.r{text-align:right}
+.tbl td{padding:3px 12px;font-size:10px;border-bottom:1px solid #1c2128;font-variant-numeric:tabular-nums}
+.tbl tbody tr:hover{background:var(--bg3)}
+
+.badge{font-size:8px;padding:2px 6px;border-radius:2px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
+.b-buy{background:#0d3b2a;color:#3fb950;border:1px solid #1a5c3a}
+.b-sell{background:#3d1515;color:#f85149;border:1px solid #5c2020}
+.b-neu{background:#1c2128;color:#8b949e;border:1px solid #30363d}
+
+.vol-section{padding:5px 12px 8px}
+.vol-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.vol-lbl{font-size:9px;width:80px;flex-shrink:0}
+.vol-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.vol-bar{height:100%;border-radius:3px;transition:width .4s}
+.vol-bar.g{background:var(--green)}.vol-bar.r{background:var(--red)}
+.vol-val{font-size:9px;min-width:65px;text-align:right;font-variant-numeric:tabular-nums}
+
+.tab-row{display:flex;padding:0 12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.tab{font-size:9px;padding:5px 10px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s;user-select:none}
+.tab.on-g{color:var(--green);border-bottom-color:var(--green)}
+.tab.on-r{color:var(--red);border-bottom-color:var(--red)}
+
+.chart-outer{padding:6px 12px 0}
+.chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:6px}
+.chart-legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
+.legend-line{width:18px;height:2px;border-radius:1px;flex-shrink:0}
+.chart-wrap{height:100px;position:relative}
+.ts{font-size:9px;color:var(--text3);text-align:right;padding:2px 12px 6px}
+
+.empty{padding:18px 12px;text-align:center;color:var(--text3);font-size:9px;line-height:1.8}
+.empty strong{display:block;color:var(--text2);font-size:10px;margin-bottom:2px}
+
+/* import button inline in panel header */
+.import-link{font-size:9px;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none}
+.import-link:hover{color:var(--text)}
+
+.cg{color:var(--green)}.cr{color:var(--red)}.cy{color:var(--yellow)}.cm{color:var(--text2)}
+
+.title-editable{background:transparent;border:none;border-bottom:1px dashed var(--border);color:inherit;font-family:'Courier New',monospace;font-size:13px;font-weight:700;width:140px;outline:none;cursor:text;padding:0 2px}
+.title-editable:focus{border-bottom-color:var(--blue)}
+
+/* ===== WEEKLY FLOW ===== */
+.weekly{max-width:1840px;margin:10px auto 0}
+.weekly-panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
+.weekly-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.weekly-head .wtitle{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.weekly-head .wsub{font-size:9px;color:var(--text3)}
+.weekly-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.weekly-select{font-family:'Courier New',monospace;font-size:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;cursor:pointer;outline:none}
+.weekly-select:focus{border-color:var(--blue)}
+.wtbl-wrap{overflow-x:auto}
+.wtbl{width:100%;border-collapse:collapse;min-width:560px}
+.wtbl th{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:7px 14px;text-align:right;font-weight:400;border-bottom:1px solid var(--border);background:var(--bg3);position:sticky;top:0}
+.wtbl th:first-child{text-align:left}
+.wtbl td{padding:6px 14px;font-size:10px;text-align:right;border-bottom:1px solid var(--border2);font-variant-numeric:tabular-nums}
+.wtbl td:first-child{text-align:left;color:var(--text2)}
+.wtbl tbody tr:hover{background:var(--bg3)}
+.wtbl tr.wtoday td:first-child::after{content:'• hoje';color:var(--blue);font-size:8px;margin-left:6px;letter-spacing:.5px}
+.wtbl tr.wtotal td{border-top:2px solid var(--border);font-weight:700;background:rgba(88,166,255,.05)}
+.wtbl tr.wtotal td:first-child{color:var(--text)}
+.wcell-empty{color:var(--text3)}
+.wbadge{font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;letter-spacing:.3px}
+.weekly-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;padding:7px 14px;border-top:1px solid var(--border);font-size:9px;color:var(--text3)}
+.weekly-empty{padding:24px 14px;text-align:center;color:var(--text3);font-size:10px;line-height:1.9}
+.weekly-empty strong{display:block;color:var(--text2);font-size:11px;margin-bottom:3px}
+
+@media(max-width:1100px){.dash{grid-template-columns:1fr 1fr}}
+@media(max-width:740px){
+  .dash{grid-template-columns:1fr}
+  body{padding:8px}
+  .top-bar{justify-content:center;text-align:center}
+  .panel-stats{grid-template-columns:1fr 1fr 1fr}
+  .modal{padding:16px}
+  .btn{padding:7px 12px}
+}
+@media(max-width:420px){
+  .panel-stats{grid-template-columns:1fr}
+  .price-main{font-size:13px}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== MODAL ===== -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Importar dados da planilha</h2>
+    <div class="modal-desc">
+      Na planilha, vá na aba <code>Entrada de Dados</code>. Selecione todas as linhas com dados
+      (incluindo o cabeçalho: <code>Corretora | % | Vol. Financeiro (R$) | Vol. Qtd</code>),
+      copie com <code>Ctrl+C</code> e cole no campo abaixo.<br>
+      Cole separadamente para cada ativo (WIN e WDO) se tiver planilhas diferentes.
+    </div>
+    <div class="modal-tabs">
+      <div class="modal-tab active" data-target="tab-win">Dólar — WIN</div>
+      <div class="modal-tab" data-target="tab-wdo">Índice — WDO</div>
+      <div class="modal-tab" data-target="tab-atv">Ativo Livre</div>
+    </div>
+    <div class="modal-panel active" id="tab-win">
+      <label>Dados do WIN (Dólar)</label>
+      <textarea id="paste-win" placeholder="Cole aqui os dados do WIN...
+Exemplo:
+Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
+UBS	18,77	676492017	19030
+Goldman	7,55	271993300	7651
+Terra	12,90	-465330904	-13079"></textarea>
+    </div>
+    <div class="modal-panel" id="tab-wdo">
+      <label>Dados do WDO (Índice)</label>
+      <textarea id="paste-wdo" placeholder="Cole aqui os dados do WDO...
+Exemplo:
+Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
+XP	7,08	254623548	7181
+Morgan	9,70	349676978	9840
+Terra	12,90	-465330904	-13079"></textarea>
+    </div>
+    <div class="modal-panel" id="tab-atv">
+      <label>Dados do Ativo Livre</label>
+      <textarea id="paste-atv" placeholder="Cole aqui os dados do ativo livre...
+Exemplo:
+Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
+XP	7,08	254623548	7181
+Morgan	9,70	349676978	9840
+Terra	12,90	-465330904	-13079"></textarea>
+    </div>
+    <div class="modal-error" id="modal-err"></div>
+    <div class="modal-actions">
+      <div class="modal-hint">Dados processados localmente — nenhuma informação sai do navegador.</div>
+      <div class="modal-btns">
+        <button class="btn" id="btn-cancel">Cancelar</button>
+        <button class="btn btn-blue" id="btn-apply">Aplicar ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOP BAR ===== -->
+<div class="top-bar">
+  <div class="top-bar-title">FLUXO FINANCEIRO</div>
+  <div class="top-bar-right">
+    <span class="top-bar-time" id="clock">—</span>
+    <button class="btn btn-blue" id="btn-open">⬆ Importar Dados da Planilha</button>
+    <button class="btn" id="btn-clear-panels">🗑 Limpar painéis</button>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div class="dash">
+
+  <!-- DÓLAR / WIN -->
+  <div class="panel" id="panel-win">
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="title-left"><span class="cy" style="font-size:15px">▪</span> DÓLAR</div>
+        <div class="price-block">
+          <div class="price-main cy" id="win-price">—</div>
+          <div class="price-sub cm" id="win-sub"><span class="import-link" onclick="openModal('win')">Clique para importar dados</span></div>
+        </div>
+      </div>
+      <div class="panel-stats">
+        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="win-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="win-s-sell">—</div></div>
+        <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="win-s-net">—</div></div>
+      </div>
+    </div>
+
+    <div class="sec">Participantes</div>
+    <div id="win-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
+
+    <div class="sec">Posição % Volume</div>
+    <div class="vol-section" id="win-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Top Corretoras — Saldo</div>
+    <div class="tab-row" id="win-tabs">
+      <div class="tab on-g" data-panel="win" data-side="buy">Comprando</div>
+      <div class="tab" data-panel="win" data-side="sell" style="color:var(--red)">Vendendo</div>
+    </div>
+    <div id="win-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+    <div id="win-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Saldo Acumulado (R$ M)</div>
+    <div class="chart-outer">
+      <div class="chart-legend" id="win-legend">
+        <div class="chart-legend-item"><div class="legend-line" style="background:#58a6ff"></div>Estrangeiro</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#e3b341"></div>Bancos</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#3fb950"></div>Pess. Física</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#8b949e"></div>Outros</div>
+      </div>
+      <div class="chart-wrap"><canvas id="win-chart" role="img" aria-label="Saldo acumulado WIN por grupo"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ÍNDICE / WDO -->
+  <div class="panel" id="panel-wdo">
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="title-left"><span class="cg" style="font-size:15px">▪</span> ÍNDICE</div>
+        <div class="price-block">
+          <div class="price-main cg" id="wdo-price">—</div>
+          <div class="price-sub cm" id="wdo-sub"><span class="import-link" onclick="openModal('wdo')">Clique para importar dados</span></div>
+        </div>
+      </div>
+      <div class="panel-stats">
+        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="wdo-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="wdo-s-sell">—</div></div>
+        <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="wdo-s-net">—</div></div>
+      </div>
+    </div>
+
+    <div class="sec">Participantes</div>
+    <div id="wdo-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
+
+    <div class="sec">Posição % Volume</div>
+    <div class="vol-section" id="wdo-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Top Corretoras — Saldo</div>
+    <div class="tab-row" id="wdo-tabs">
+      <div class="tab on-g" data-panel="wdo" data-side="buy">Comprando</div>
+      <div class="tab" data-panel="wdo" data-side="sell" style="color:var(--red)">Vendendo</div>
+    </div>
+    <div id="wdo-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+    <div id="wdo-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Saldo Acumulado (R$ M)</div>
+    <div class="chart-outer">
+      <div class="chart-legend" id="wdo-legend">
+        <div class="chart-legend-item"><div class="legend-line" style="background:#58a6ff"></div>Estrangeiro</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#e3b341"></div>Bancos</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#3fb950"></div>Pess. Física</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#8b949e"></div>Outros</div>
+      </div>
+      <div class="chart-wrap"><canvas id="wdo-chart" role="img" aria-label="Saldo acumulado WDO por grupo"></canvas></div>
+    </div>
+    <div class="ts" id="ts-footer">—</div>
+  </div>
+
+  <!-- ATIVO LIVRE -->
+  <div class="panel" id="panel-atv">
+    <div class="panel-header">
+      <div class="panel-title">
+        <div class="title-left"><span class="cy" style="font-size:15px;color:#a371f7">▪</span> <input class="title-editable" id="atv-title-input" value="ATIVO" maxlength="20" title="Clique para editar o nome do ativo"></div>
+        <div class="price-block">
+          <div class="price-main" id="atv-price" style="color:#a371f7">—</div>
+          <div class="price-sub cm" id="atv-sub"><span class="import-link" onclick="openModal('atv')">Clique para importar dados</span></div>
+        </div>
+      </div>
+      <div class="panel-stats">
+        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="atv-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="atv-s-sell">—</div></div>
+        <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="atv-s-net">—</div></div>
+      </div>
+    </div>
+
+    <div class="sec">Participantes</div>
+    <div id="atv-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
+
+    <div class="sec">Posição % Volume</div>
+    <div class="vol-section" id="atv-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Top Corretoras — Saldo</div>
+    <div class="tab-row" id="atv-tabs">
+      <div class="tab on-g" data-panel="atv" data-side="buy">Comprando</div>
+      <div class="tab" data-panel="atv" data-side="sell" style="color:var(--red)">Vendendo</div>
+    </div>
+    <div id="atv-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+    <div id="atv-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+
+    <div class="sec">Saldo Acumulado (R$ M)</div>
+    <div class="chart-outer">
+      <div class="chart-legend" id="atv-legend">
+        <div class="chart-legend-item"><div class="legend-line" style="background:#58a6ff"></div>Estrangeiro</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#e3b341"></div>Bancos</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#3fb950"></div>Pess. Física</div>
+        <div class="chart-legend-item"><div class="legend-line" style="background:#8b949e"></div>Outros</div>
+      </div>
+      <div class="chart-wrap"><canvas id="atv-chart" role="img" aria-label="Saldo acumulado Ativo Livre por grupo"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== FLUXO SEMANAL ===== -->
+<div class="weekly">
+  <div class="weekly-panel">
+    <div class="weekly-head">
+      <div>
+        <div class="wtitle"><span style="color:var(--blue)">▣</span> Fluxo Semanal — Saldo por Grupo</div>
+        <div class="wsub">Saldo líquido (R$) acumulado a cada importação, por dia da semana</div>
+      </div>
+      <div class="weekly-actions">
+        <select class="weekly-select" id="weekly-asset">
+          <option value="win">Dólar (WIN)</option>
+          <option value="wdo">Índice (WDO)</option>
+          <option value="atv">Ativo Livre</option>
+        </select>
+        <button class="btn" id="btn-undo-today" title="Remove a última importação registrada hoje no ativo selecionado">↶ Desfazer import. de hoje</button>
+        <button class="btn" id="btn-clear-week">Limpar semana</button>
+      </div>
+    </div>
+    <div id="weekly-body">
+      <div class="weekly-empty">
+        <strong>Sem dados na semana</strong>
+        Importe os dados de um ativo — o saldo do dia atual entra automaticamente nesta tabela.
+      </div>
+    </div>
+    <div class="weekly-foot">
+      <span id="weekly-note">Cada importação SOMA ao dia atual. Use "Desfazer" se importar por engano. Dados salvos no navegador, apagados só pelos botões.</span>
+      <span id="weekly-updated">—</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function tick(){
+  const t = new Date().toLocaleTimeString('pt-BR');
+  document.getElementById('clock').textContent = t;
+  document.getElementById('ts-footer').textContent = 'Última atualização: ' + t;
+}
+tick(); setInterval(tick,1000);
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    const p=tab.dataset.panel, s=tab.dataset.side;
+    tab.closest('.tab-row').querySelectorAll('.tab').forEach(t=>{
+      t.classList.remove('on-g','on-r');
+      t.style.color = t.dataset.side==='sell'?'var(--red)':'var(--text2)';
+    });
+    tab.classList.add(s==='buy'?'on-g':'on-r'); tab.style.color='';
+    document.getElementById(p+'-br-buy').style.display = s==='buy'?'':'none';
+    document.getElementById(p+'-br-sell').style.display = s==='sell'?'':'none';
+  });
+});
+
+// ─── MODAL ───────────────────────────────────────────────────────────────────
+const overlay = document.getElementById('overlay');
+let targetPanel = null;
+
+function openModal(panel){
+  targetPanel = panel || null;
+  // Switch to correct tab if panel specified
+  if(panel){
+    const target = panel==='win'?'tab-win':panel==='wdo'?'tab-wdo':'tab-atv';
+    document.querySelectorAll('.modal-tab').forEach(t=>{
+      t.classList.toggle('active', t.dataset.target===target);
+    });
+    document.querySelectorAll('.modal-panel').forEach(p=>{
+      p.classList.toggle('active', p.id===target);
+    });
+  }
+  overlay.classList.add('open');
+  const activeTA = document.querySelector('.modal-panel.active textarea');
+  if(activeTA) setTimeout(()=>activeTA.focus(),50);
+}
+
+document.getElementById('btn-open').addEventListener('click',()=>openModal(null));
+document.getElementById('btn-cancel').addEventListener('click',()=>overlay.classList.remove('open'));
+overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+
+// Modal tabs
+document.querySelectorAll('.modal-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.modal-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.modal-panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.target).classList.add('active');
+  });
+});
+
+document.getElementById('btn-apply').addEventListener('click',()=>{
+  const errEl = document.getElementById('modal-err');
+  errEl.textContent='';
+  let ok=0, errMsg='';
+
+  const rawWin = document.getElementById('paste-win').value.trim();
+  const rawWdo = document.getElementById('paste-wdo').value.trim();
+
+  if(!rawWin && !rawWdo && !document.getElementById('paste-atv').value.trim()){ errEl.textContent='Cole os dados em pelo menos um dos campos.'; return; }
+
+  if(rawWin){
+    try{ applyPanel('win', rawWin); ok++; }
+    catch(e){ errMsg += 'WIN: '+e.message+' '; }
+  }
+  if(rawWdo){
+    try{ applyPanel('wdo', rawWdo); ok++; }
+    catch(e){ errMsg += 'WDO: '+e.message+' '; }
+  }
+  const rawAtv = document.getElementById('paste-atv').value.trim();
+  if(rawAtv){
+    try{ applyPanel('atv', rawAtv); ok++; }
+    catch(e){ errMsg += 'ATV: '+e.message+' '; }
+  }
+
+  if(errMsg){ errEl.textContent = errMsg; return; }
+  overlay.classList.remove('open');
+});
+
+// ─── CATEGORY MAP ─────────────────────────────────────────────────────────────
+const CAT = {
+  Barclays:'EXT',BNP:'EXT',Citibank:'EXT',Credit:'EXT',Deutsche:'EXT',
+  Goldman:'EXT',HSBC:'EXT','JP Morgan':'EXT','JPMorgan':'EXT',Macquarie:'EXT',
+  Merrill:'EXT',Morgan:'EXT',Nomura:'EXT','Société Générale':'EXT',Tullett:'EXT',UBS:'EXT',
+  ABN:'INST',BB:'INST',Bradesco:'INST',BTG:'INST',C6:'INST',Caixa:'INST',
+  Citigroup:'INST',Inter:'INST',Itau:'INST','Itaú':'INST',Mirae:'INST',
+  Santander:'INST','Santander Institucional':'INST',
+  Agora:'PF',Ativa:'PF','BGC Liquidez':'PF','CM Capital':'PF','Elliot-Warren':'PF',
+  Genial:'PF',Ideal:'PF',LEV:'PF',Necton:'PF','Nova Futura':'PF',Safra:'PF',
+  Terra:'PF',XP:'PF',
+};
+const GROUP_META = {
+  EXT:{label:'Estrangeiro'},
+  INST:{label:'Bancos'},
+  PF:{label:'Pess. Física'},
+  OUT:{label:'Outros'},
+};
+function getGroup(name){
+  if(!name) return 'OUT';
+  if(CAT[name]) return CAT[name];
+  for(const k in CAT){ if(name.toLowerCase().includes(k.toLowerCase())) return CAT[k]; }
+  return 'OUT';
+}
+
+// ─── PARSE ───────────────────────────────────────────────────────────────────
+function parseNum(s){
+  if(!s||!s.trim()) return 0;
+  return parseFloat(s.replace(/R\$\s?/g,'').replace(/\s/g,'').replace(/\.(?=\d{3})/g,'').replace(',','.')) || 0;
+}
+function parseRows(raw){
+  const lines = raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const start = lines[0].toLowerCase().includes('corretora')?1:0;
+  const rows=[];
+  for(let i=start;i<lines.length;i++){
+    const c = lines[i].split('\t');
+    if(c.length<3) continue;
+    const name = c[0].trim();
+    if(!name||name==='—'||name.toLowerCase()==='nan') continue;
+    rows.push({ name, pct:parseNum(c[1]), vol:parseNum(c[2]), qty:c[3]?parseNum(c[3]):0, group:getGroup(name) });
+  }
+  if(!rows.length) throw new Error('Nenhuma linha válida. Verifique se copiou as colunas corretas com cabeçalho.');
+  return rows;
+}
+
+// ─── COMPUTE GROUPS ───────────────────────────────────────────────────────────
+function computeGroups(rows){
+  const g={EXT:{buy:0,sell:0},INST:{buy:0,sell:0},PF:{buy:0,sell:0},OUT:{buy:0,sell:0}};
+  for(const r of rows){
+    const grp=g[r.group]||g['OUT'];
+    if(r.vol>=0) grp.buy+=r.vol; else grp.sell+=r.vol;
+  }
+  for(const k in g){ g[k].net=g[k].buy+g[k].sell; }
+  return g;
+}
+
+// ─── FORMAT ───────────────────────────────────────────────────────────────────
+function fmtV(v){
+  const a=Math.abs(v), s=v>=0?'+':'-';
+  if(a>=1e9) return s+'R$ '+(a/1e9).toFixed(2)+'B';
+  if(a>=1e6) return s+'R$ '+(a/1e6).toFixed(1)+'M';
+  if(a>=1e3) return s+'R$ '+(a/1e3).toFixed(1)+'K';
+  return s+'R$ '+a;
+}
+function fmtM(v){
+  const a=Math.abs(v), s=v>=0?'+':'-';
+  if(a>=1e9) return s+(a/1e9).toFixed(2)+'B';
+  if(a>=1e6) return s+(a/1e6).toFixed(1)+'M';
+  return s+a.toFixed(0);
+}
+function cc(v){ return v>0?'cg':v<0?'cr':'cm'; }
+function badge(v){ return v>0?'<span class="badge b-buy">COMPRADO</span>':v<0?'<span class="badge b-sell">VENDIDO</span>':'<span class="badge b-neu">NEUTRO</span>'; }
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderParts(id, groups){
+  const order=['EXT','INST','PF','OUT'];
+  let h=`<table class="tbl"><thead><tr><th>Participante</th><th class="r">Compra</th><th class="r">Venda</th><th class="r">Saldo</th><th class="r">Pos.</th></tr></thead><tbody>`;
+  for(const k of order){
+    const g=groups[k];
+    h+=`<tr><td>${GROUP_META[k].label}</td><td class="r ${g.buy>0?'cg':''}">${g.buy?fmtV(g.buy):'0'}</td><td class="r ${g.sell<0?'cr':''}">${g.sell?fmtV(g.sell):'0'}</td><td class="r ${cc(g.net)}">${fmtV(g.net)}</td><td class="r">${badge(g.net)}</td></tr>`;
+  }
+  document.getElementById(id).innerHTML=h+'</tbody></table>';
+}
+
+function renderVol(id, groups){
+  const order=['EXT','INST','PF','OUT'];
+  const maxA=Math.max(...order.map(k=>Math.abs(groups[k].net)),1);
+  let h='';
+  for(const k of order){
+    const g=groups[k], pct=Math.round(Math.abs(g.net)/maxA*95), buy=g.net>=0;
+    h+=`<div class="vol-row"><div class="vol-lbl">${GROUP_META[k].label}</div><div class="vol-bar-bg"><div class="vol-bar ${buy?'g':'r'}" style="width:${pct}%"></div></div><div class="vol-val ${cc(g.net)}">${fmtV(g.net)}</div></div>`;
+  }
+  document.getElementById(id).innerHTML=h;
+}
+
+function renderBrokers(buyId, sellId, rows){
+  const buying  = [...rows].filter(r=>r.vol>0).sort((a,b)=>b.vol-a.vol).slice(0,5);
+  const selling = [...rows].filter(r=>r.vol<0).sort((a,b)=>a.vol-b.vol).slice(0,5);
+  function tbl(list, isBuy){
+    if(!list.length) return '<div class="empty" style="padding:10px"><span>Sem dados</span></div>';
+    let h=`<table class="tbl"><thead><tr><th>Corretora</th><th class="r">%</th><th class="r">Vol. Fin. (M)</th></tr></thead><tbody>`;
+    for(const r of list) h+=`<tr><td>${r.name}</td><td class="r">${r.pct.toFixed(2)}%</td><td class="r ${isBuy?'cg':'cr'}">${fmtM(r.vol)}</td></tr>`;
+    return h+'</tbody></table>';
+  }
+  document.getElementById(buyId).innerHTML  = tbl(buying, true);
+  document.getElementById(sellId).innerHTML = tbl(selling, false);
+}
+
+function renderStats(prefix, groups){
+  const totalBuy  = Object.values(groups).reduce((s,g)=>s+g.buy,0);
+  const totalSell = Object.values(groups).reduce((s,g)=>s+g.sell,0);
+  const net = totalBuy+totalSell;
+  document.getElementById(prefix+'-s-buy').textContent  = fmtV(totalBuy);
+  document.getElementById(prefix+'-s-sell').textContent = fmtV(totalSell);
+  const netEl = document.getElementById(prefix+'-s-net');
+  netEl.textContent = fmtV(net); netEl.className='stat-value '+cc(net);
+  const sub = document.getElementById(prefix+'-sub');
+  sub.textContent='Saldo: '+fmtV(net);
+  sub.className='price-sub '+cc(net);
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────────────────────
+// Each group gets a realistic intraday accumulation curve.
+// We don't have real time-series data, so we build a monotonic curve
+// from 0 → finalNet using a smooth S-shape (more realistic than linear).
+const charts={};
+const GROUP_COLORS={ EXT:'#58a6ff', INST:'#e3b341', PF:'#3fb950', OUT:'#8b949e' };
+const GROUP_LABELS={ EXT:'Estrangeiro', INST:'Bancos', PF:'Pess. Física', OUT:'Outros' };
+const HOURS=['9h','10h','11h','12h','13h','14h','15h','16h','17h'];
+// S-curve weights (simulate slow morning, active midday, tapering close)
+const CURVE=[0.03, 0.08, 0.18, 0.32, 0.50, 0.66, 0.80, 0.91, 1.0];
+
+function buildCurve(finalVal){
+  return CURVE.map(w=>+((finalVal*w)/1e6).toFixed(2));
+}
+
+function renderChart(id, groups){
+  if(charts[id]) charts[id].destroy();
+  const ORDER=['EXT','INST','PF','OUT'];
+  const datasets = ORDER.map(k=>({
+    label: GROUP_LABELS[k],
+    data: buildCurve(groups[k].net),
+    borderColor: GROUP_COLORS[k],
+    borderWidth: 1.5,
+    pointRadius: 0,
+    tension: 0.4,
+    fill: false,
+  }));
+
+  charts[id] = new Chart(document.getElementById(id),{
+    type:'line',
+    data:{ labels:HOURS, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:'#1c2128', borderColor:'#30363d', borderWidth:1,
+          titleColor:'#8b949e', bodyColor:'#e6edf3',
+          titleFont:{family:'Courier New',size:9}, bodyFont:{family:'Courier New',size:10},
+          callbacks:{
+            label: c=>{
+              const v=c.raw;
+              return ' '+c.dataset.label+': '+(v>=0?'+':'')+v.toFixed(1)+'M';
+            }
+          }
+        }
+      },
+      scales:{
+        x:{
+          ticks:{color:'#8b949e',font:{size:9,family:'Courier New'},maxRotation:0},
+          grid:{color:'#21262d'}, border:{display:false}
+        },
+        y:{
+          ticks:{color:'#8b949e',font:{size:9,family:'Courier New'},
+            callback:v=>(v>=0?'+':'')+v+'M'},
+          grid:{color:'#21262d'}, border:{display:false}
+        }
+      }
+    }
+  });
+}
+
+// ─── APPLY PANEL ─────────────────────────────────────────────────────────────
+function applyPanel(prefix, raw, opts){
+  const rows   = parseRows(raw);
+  const groups = computeGroups(rows);
+  renderStats(prefix, groups);
+  renderParts(prefix+'-parts', groups);
+  renderVol(prefix+'-vol', groups);
+  renderBrokers(prefix+'-br-buy', prefix+'-br-sell', rows);
+  renderChart(prefix+'-chart', groups);
+  if(!opts || opts.record!==false) recordWeekly(prefix, groups);   // alimenta a tabela semanal
+  if(!opts || opts.persist!==false) saveRaw(prefix, raw);          // guarda para reabrir
+}
+
+// ─── PERSISTÊNCIA DOS PAINÉIS ─────────────────────────────────────────────────
+const RAW_KEY = 'fluxo_raw_v1';
+function loadRawStore(){
+  try{ const r=(typeof localStorage!=='undefined')&&localStorage.getItem(RAW_KEY); if(r) return JSON.parse(r); }catch(e){}
+  return {};
+}
+function saveRaw(prefix, raw){
+  const store = loadRawStore();
+  store[prefix] = raw;
+  try{ if(typeof localStorage!=='undefined') localStorage.setItem(RAW_KEY, JSON.stringify(store)); }catch(e){}
+}
+function restorePanels(){
+  const store = loadRawStore();
+  for(const p of ['win','wdo','atv']){
+    if(store[p]){
+      try{ applyPanel(p, store[p], {record:false, persist:false}); }catch(e){}
+    }
+  }
+}
+
+// Restaura um painel ao estado vazio inicial (sem apagar a tabela semanal).
+function resetPanelDom(p){
+  const emptyParts = '<div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div>';
+  const emptyVol   = '<div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div>';
+  const emptyBr    = '<div class="empty" style="padding:10px"><span>Aguardando dados...</span></div>';
+  if(charts[p+'-chart']){ charts[p+'-chart'].destroy(); delete charts[p+'-chart']; }
+  document.getElementById(p+'-parts').innerHTML   = emptyParts;
+  document.getElementById(p+'-vol').innerHTML     = emptyVol;
+  document.getElementById(p+'-br-buy').innerHTML  = emptyBr;
+  document.getElementById(p+'-br-sell').innerHTML = emptyBr;
+  ['-s-buy','-s-sell','-s-net'].forEach(s=>{
+    const el=document.getElementById(p+s); if(el){ el.textContent='—'; el.className='stat-value'+(s==='-s-buy'?' cg':s==='-s-sell'?' cr':''); }
+  });
+  const sub=document.getElementById(p+'-sub');
+  if(sub){ sub.className='price-sub cm'; sub.innerHTML='<span class="import-link" onclick="openModal(\''+p+'\')">Clique para importar dados</span>'; }
+}
+
+function clearPanels(){
+  // Apaga apenas os dados importados dos painéis. NÃO mexe na tabela semanal.
+  try{ if(typeof localStorage!=='undefined') localStorage.removeItem(RAW_KEY); }catch(e){}
+  ['win','wdo','atv'].forEach(resetPanelDom);
+  ['paste-win','paste-wdo','paste-atv'].forEach(id=>{ const t=document.getElementById(id); if(t) t.value=''; });
+}
+
+document.getElementById('btn-clear-panels').addEventListener('click', ()=>{
+  if(confirm('Limpar os dados importados dos painéis (WIN, WDO e Ativo Livre)?\n\nA tabela de fluxo semanal NÃO será apagada.')){
+    clearPanels();
+  }
+});
+
+// ─── FLUXO SEMANAL ────────────────────────────────────────────────────────────
+const WEEK_KEY  = 'fluxo_semanal_v2';   // v2: dia acumula importações + histórico p/ desfazer
+const WEEK_KEY_OLD = 'fluxo_semanal_v1';
+const DAY_KEYS  = ['mon','tue','wed','thu','fri'];
+const DAY_NAMES = { mon:'Segunda', tue:'Terça', wed:'Quarta', thu:'Quinta', fri:'Sexta' };
+const GRP_ORDER = ['EXT','INST','PF','OUT'];
+
+// estado: { win:{ mon:{ sum:{EXT,INST,PF,OUT}, hist:[{EXT,..}, ...] }, ... }, wdo:{...}, atv:{...}, updated }
+let weekState = loadWeek();
+
+function emptyDay(){ return { sum:{EXT:0,INST:0,PF:0,OUT:0}, hist:[] }; }
+
+function loadWeek(){
+  // tenta carregar o formato novo
+  try{
+    const raw=(typeof localStorage!=='undefined') && localStorage.getItem(WEEK_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  // migra do formato antigo (v1: dia = {EXT,INST,PF,OUT} substituível) se existir
+  try{
+    const old=(typeof localStorage!=='undefined') && localStorage.getItem(WEEK_KEY_OLD);
+    if(old){
+      const o=JSON.parse(old);
+      const ns={ win:{}, wdo:{}, atv:{}, updated:o.updated||null };
+      for(const asset of ['win','wdo','atv']){
+        const a=o[asset]||{};
+        for(const dk of DAY_KEYS){
+          if(a[dk]){
+            const s={EXT:a[dk].EXT||0,INST:a[dk].INST||0,PF:a[dk].PF||0,OUT:a[dk].OUT||0};
+            ns[asset][dk]={ sum:s, hist:[ {...s} ] };
+          }
+        }
+      }
+      return ns;
+    }
+  }catch(e){}
+  return { win:{}, wdo:{}, atv:{}, updated:null };
+}
+function saveWeek(){
+  try{ if(typeof localStorage!=='undefined') localStorage.setItem(WEEK_KEY, JSON.stringify(weekState)); }catch(e){}
+}
+function todayKey(){
+  const d = new Date().getDay();          // 0=dom .. 6=sáb
+  if(d===0||d===6) return 'fri';          // fim de semana cai no último pregão
+  return DAY_KEYS[d-1];
+}
+
+function recordWeekly(prefix, groups){
+  if(!weekState[prefix]) weekState[prefix] = {};
+  const dk = todayKey();
+  if(!weekState[prefix][dk]) weekState[prefix][dk] = emptyDay();
+  const day = weekState[prefix][dk];
+  const entry = {};
+  for(const k of GRP_ORDER) entry[k] = groups[k].net;
+  // ACUMULA: soma esta importação ao saldo do dia e guarda no histórico (p/ desfazer)
+  for(const k of GRP_ORDER) day.sum[k] += entry[k];
+  day.hist.push(entry);
+  weekState.updated = new Date().toLocaleString('pt-BR');
+  saveWeek();
+  renderWeekly();
+}
+
+// Desfaz a última importação registrada hoje no ativo selecionado.
+function undoTodayImport(){
+  const asset = document.getElementById('weekly-asset').value;
+  const dk = todayKey();
+  const day = weekState[asset] && weekState[asset][dk];
+  if(!day || !day.hist.length){ return; }
+  const last = day.hist.pop();
+  for(const k of GRP_ORDER) day.sum[k] -= last[k];
+  if(!day.hist.length) delete weekState[asset][dk];   // sem importações -> remove o dia
+  weekState.updated = new Date().toLocaleString('pt-BR');
+  saveWeek();
+  renderWeekly();
+}
+
+function renderWeekly(){
+  const asset = document.getElementById('weekly-asset').value;
+  const data  = weekState[asset] || {};
+  const body  = document.getElementById('weekly-body');
+  const days  = DAY_KEYS.filter(d=>data[d]);
+
+  if(!days.length){
+    body.innerHTML = `<div class="weekly-empty"><strong>Sem dados para este ativo na semana</strong>
+      Importe os dados — o saldo do dia atual é somado automaticamente aqui.</div>`;
+    document.getElementById('weekly-updated').textContent = weekState.updated ? 'Atualizado: '+weekState.updated : '—';
+    return;
+  }
+
+  const tk = todayKey();
+  let h = `<div class="wtbl-wrap"><table class="wtbl"><thead><tr>
+    <th>Dia</th>
+    <th>Estrangeiro</th><th>Bancos</th><th>Pess. Física</th><th>Outros</th>
+    <th>Saldo Total</th><th>Imports</th></tr></thead><tbody>`;
+
+  const totals = { EXT:0, INST:0, PF:0, OUT:0 };
+
+  for(const dk of DAY_KEYS){
+    const day = data[dk];
+    const isToday = dk===tk;
+    if(!day){
+      h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>
+        <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
+        <td class="wcell-empty">—</td><td class="wcell-empty">—</td>
+        <td class="wcell-empty">—</td><td class="wcell-empty">—</td></tr>`;
+      continue;
+    }
+    let rowTot = 0;
+    let cells = '';
+    for(const g of GRP_ORDER){
+      const v = day.sum[g] || 0; rowTot += v; totals[g] += v;
+      cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
+    }
+    const nImp = day.hist.length;
+    h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${nImp}×</td></tr>`;
+  }
+
+  // linha de total
+  const grandTot = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
+  let totCells = '';
+  for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
+  h += `<tr class="wtotal"><td>Total semana</td>${totCells}<td class="${cc(grandTot)}">${fmtV(grandTot)}</td><td></td></tr>`;
+
+  h += `</tbody></table></div>`;
+  body.innerHTML = h;
+
+  // habilita/desabilita o botão de desfazer conforme há importações hoje
+  const todayDay = data[tk];
+  const undoBtn = document.getElementById('btn-undo-today');
+  if(undoBtn){
+    const can = !!(todayDay && todayDay.hist.length);
+    undoBtn.disabled = !can;
+    undoBtn.style.opacity = can ? '1' : '.45';
+    undoBtn.style.cursor  = can ? 'pointer' : 'not-allowed';
+  }
+  document.getElementById('weekly-updated').textContent = weekState.updated ? 'Atualizado: '+weekState.updated : '—';
+}
+
+document.getElementById('weekly-asset').addEventListener('change', renderWeekly);
+document.getElementById('btn-undo-today').addEventListener('click', undoTodayImport);
+document.getElementById('btn-clear-week').addEventListener('click', ()=>{
+  if(confirm('Limpar todos os dados da semana (todos os ativos)?')){
+    weekState = { win:{}, wdo:{}, atv:{}, updated:null };
+    saveWeek();
+    renderWeekly();
+  }
+});
+
+renderWeekly();
+restorePanels();
+</script>
+</body>
+</html>
