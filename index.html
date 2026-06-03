@@ -128,6 +128,17 @@ body{padding:12px}
 .tab.on-g{color:var(--green);border-bottom-color:var(--green)}
 .tab.on-r{color:var(--red);border-bottom-color:var(--red)}
 
+/* ===== CORRETORAS LADO A LADO ===== */
+.br-cols{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border)}
+.br-col{background:var(--bg2);min-width:0}
+.br-col-head{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:6px 12px 4px}
+.br-col-head .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.br-col.buy .br-col-head{color:var(--green)}
+.br-col.sell .br-col-head{color:var(--red)}
+.br-col.buy .dot{background:var(--green)}
+.br-col.sell .dot{background:var(--red)}
+@media(max-width:480px){.br-cols{grid-template-columns:1fr}}
+
 .chart-outer{padding:6px 12px 0}
 .chart-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:6px}
 .chart-legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
@@ -294,12 +305,16 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="vol-section" id="win-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Top Corretoras — Saldo</div>
-    <div class="tab-row" id="win-tabs">
-      <div class="tab on-g" data-panel="win" data-side="buy">Comprando</div>
-      <div class="tab" data-panel="win" data-side="sell" style="color:var(--red)">Vendendo</div>
+    <div class="br-cols">
+      <div class="br-col buy">
+        <div class="br-col-head"><span class="dot"></span>Comprando</div>
+        <div id="win-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
+      <div class="br-col sell">
+        <div class="br-col-head"><span class="dot"></span>Vendendo</div>
+        <div id="win-br-sell"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
     </div>
-    <div id="win-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
-    <div id="win-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Saldo Acumulado (R$ M)</div>
     <div class="chart-outer">
@@ -337,12 +352,16 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="vol-section" id="wdo-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Top Corretoras — Saldo</div>
-    <div class="tab-row" id="wdo-tabs">
-      <div class="tab on-g" data-panel="wdo" data-side="buy">Comprando</div>
-      <div class="tab" data-panel="wdo" data-side="sell" style="color:var(--red)">Vendendo</div>
+    <div class="br-cols">
+      <div class="br-col buy">
+        <div class="br-col-head"><span class="dot"></span>Comprando</div>
+        <div id="wdo-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
+      <div class="br-col sell">
+        <div class="br-col-head"><span class="dot"></span>Vendendo</div>
+        <div id="wdo-br-sell"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
     </div>
-    <div id="wdo-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
-    <div id="wdo-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Saldo Acumulado (R$ M)</div>
     <div class="chart-outer">
@@ -381,12 +400,16 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="vol-section" id="atv-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Top Corretoras — Saldo</div>
-    <div class="tab-row" id="atv-tabs">
-      <div class="tab on-g" data-panel="atv" data-side="buy">Comprando</div>
-      <div class="tab" data-panel="atv" data-side="sell" style="color:var(--red)">Vendendo</div>
+    <div class="br-cols">
+      <div class="br-col buy">
+        <div class="br-col-head"><span class="dot"></span>Comprando</div>
+        <div id="atv-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
+      <div class="br-col sell">
+        <div class="br-col-head"><span class="dot"></span>Vendendo</div>
+        <div id="atv-br-sell"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
+      </div>
     </div>
-    <div id="atv-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
-    <div id="atv-br-sell" style="display:none"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
 
     <div class="sec">Saldo Acumulado (R$ M)</div>
     <div class="chart-outer">
@@ -442,19 +465,6 @@ function tick(){
 }
 tick(); setInterval(tick,1000);
 
-// ─── TABS ─────────────────────────────────────────────────────────────────────
-document.querySelectorAll('.tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    const p=tab.dataset.panel, s=tab.dataset.side;
-    tab.closest('.tab-row').querySelectorAll('.tab').forEach(t=>{
-      t.classList.remove('on-g','on-r');
-      t.style.color = t.dataset.side==='sell'?'var(--red)':'var(--text2)';
-    });
-    tab.classList.add(s==='buy'?'on-g':'on-r'); tab.style.color='';
-    document.getElementById(p+'-br-buy').style.display = s==='buy'?'':'none';
-    document.getElementById(p+'-br-sell').style.display = s==='sell'?'':'none';
-  });
-});
 
 // ─── MODAL ───────────────────────────────────────────────────────────────────
 const overlay = document.getElementById('overlay');
