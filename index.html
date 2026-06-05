@@ -556,6 +556,26 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
   const daySel = document.getElementById('import-day');
   const dayKey = (daySel && daySel.value) || todayKey();
 
+  // Aviso de importação duplicada: se o dia escolhido já tem dados nesse ativo,
+  // pergunta antes de SOMAR mais uma importação (evita triplicar sem querer).
+  function jaTemDados(asset){
+    const d = weekState[asset] && weekState[asset][dayKey];
+    return d && d.hist ? d.hist.length : 0;
+  }
+  const diaNome = (typeof DAY_NAMES!=='undefined' && DAY_NAMES[dayKey]) || dayKey;
+  if(rawWin){
+    const n = jaTemDados('win');
+    if(n>0 && !confirm('O Dólar já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
+      return; // cancela tudo
+    }
+  }
+  if(rawWdo){
+    const n = jaTemDados('wdo');
+    if(n>0 && !confirm('O Índice já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
+      return; // cancela tudo
+    }
+  }
+
   if(rawWin){
     try{ applyPanel('win', rawWin, {day:dayKey}); ok++; }
     catch(e){ errMsg += 'WIN: '+e.message+' '; }
