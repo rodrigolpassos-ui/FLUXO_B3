@@ -438,6 +438,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="wsub">Saldo líquido (R$) acumulado por mês — somado automaticamente a cada importação</div>
       </div>
       <div class="weekly-actions">
+        <button class="btn" id="btn-rebuild-period" title="Recalcula o mensal e o anual a partir do histórico semanal completo">↻ Recalcular</button>
         <button class="btn" id="btn-clear-month">Limpar mensal</button>
       </div>
     </div>
@@ -632,12 +633,12 @@ function fmtM(v){
   if(a>=1e6) return s+(a/1e6).toFixed(1)+'M';
   return s+a.toFixed(0);
 }
-// Saldo: mantém a MESMA escala das colunas (M/B) p/ não confundir.
-// Nunca desce para K ou reais cheios — saldos pequenos viram p.ex. "+R$ 0.0M".
+// Saldo: mostra o valor CHEIO (sem abreviar), igual ao painel diário.
+// Ex.: +R$ 175  /  -R$ 1.234.567
 function fmtSaldo(v){
-  const a=Math.abs(v), s=v>=0?'+':'-';
-  if(a>=1e9) return s+'R$ '+(a/1e9).toFixed(2)+'B';
-  return s+'R$ '+(a/1e6).toFixed(1)+'M';
+  const s = v>=0 ? '+' : '-';
+  const a = Math.round(Math.abs(v));
+  return s + 'R$ ' + a.toLocaleString('pt-BR');
 }
 function cc(v){ return v>0?'cg':v<0?'cr':'cm'; }
 function badge(v){ return v>0?'<span class="badge b-buy">COMPRADO</span>':v<0?'<span class="badge b-sell">VENDIDO</span>':'<span class="badge b-neu">NEUTRO</span>'; }
@@ -997,6 +998,33 @@ function loadPeriod(){
 function savePeriod(){
   try{ if(typeof localStorage!=='undefined') localStorage.setItem(PERIOD_KEY, JSON.stringify(periodState)); }catch(e){}
 }
+
+// Reconstrói TODO o mensal/anual a partir do histórico semanal (fonte completa).
+// Use quando o semanal e o mensal/anual divergirem (ex.: dados antigos só no semanal).
+function rebuildPeriodFromWeekly(){
+  const fresh = { win:{months:{},years:{}}, wdo:{months:{},years:{}}, updated:new Date().toLocaleString('pt-BR') };
+  for(const asset of ['win','wdo']){
+    const days = weekState[asset] || {};
+    for(const dk of Object.keys(days)){
+      const day = days[dk];
+      if(!day || !day.hist) continue;
+      for(const entry of day.hist){
+        // usa o mês/ano marcado na importação; se faltar, cai no atual
+        const pk = periodKeys();
+        const mk = entry._mk || pk.mk;
+        const yk = entry._yk || pk.yk;
+        const a = fresh[asset];
+        if(!a.months[mk]) a.months[mk]=emptyBucket();
+        if(!a.years[yk])  a.years[yk]=emptyBucket();
+        for(const k of GRP_ORDER){ a.months[mk][k]+=(entry[k]||0); a.years[yk][k]+=(entry[k]||0); }
+        a.months[mk].imp++; a.years[yk].imp++;
+      }
+    }
+  }
+  periodState = fresh;
+  savePeriod();
+  renderPeriod();
+}
 function periodKeys(){
   const d = new Date();
   const y = d.getFullYear();
@@ -1083,6 +1111,12 @@ function renderPeriod(){
   if(u) u.textContent = periodState.updated ? 'Atualizado: '+periodState.updated : '—';
 }
 
+document.getElementById('btn-rebuild-period').addEventListener('click', ()=>{
+  if(confirm('Recalcular o MENSAL e o ANUAL a partir do histórico semanal completo?\n\nIsso refaz os acumulados de período usando todas as importações da tabela semanal. Útil quando o semanal e o mensal/anual estão diferentes.')){
+    rebuildPeriodFromWeekly();
+    alert('Pronto! Mensal e anual recalculados a partir do semanal.');
+  }
+});
 document.getElementById('btn-clear-month').addEventListener('click', ()=>{
   if(confirm('Limpar os acumulados MENSAIS (todos os meses e ativos)?')){
     for(const as of ['win','wdo']){ if(periodState[as]) periodState[as].months={}; }
