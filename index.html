@@ -263,6 +263,17 @@ XP	7,08	254623548	7181
 Morgan	9,70	349676978	9840
 Terra	12,90	-465330904	-13079"></textarea>
     </div>
+    <div style="margin:14px 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="margin:0;font-weight:600">Lançar no dia:</label>
+      <select id="import-day" style="padding:6px 10px;border-radius:6px;background:var(--card);color:var(--fg);border:1px solid var(--border);font-family:inherit;font-size:13px">
+        <option value="mon">Segunda</option>
+        <option value="tue">Terça</option>
+        <option value="wed">Quarta</option>
+        <option value="thu">Quinta</option>
+        <option value="fri">Sexta</option>
+      </select>
+      <span class="cm" style="font-size:11px;opacity:.7">Escolha o dia da semana ao qual esta importação pertence.</span>
+    </div>
     <div class="modal-error" id="modal-err"></div>
     <div class="modal-actions">
       <div class="modal-hint">Dados processados localmente — nenhuma informação sai do navegador.</div>
@@ -453,20 +464,20 @@ Terra	12,90	-465330904	-13079"></textarea>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">📈 Índice (WDO)</span>
-          <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada hoje no WDO">↶ Desfazer hoje</button>
+          <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada no WDO">↶ Desfazer último</button>
         </div>
         <div id="weekly-body-wdo"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">💵 Dólar (WIN)</span>
-          <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada hoje no WIN">↶ Desfazer hoje</button>
+          <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada no WIN">↶ Desfazer último</button>
         </div>
         <div id="weekly-body-win"></div>
       </div>
     </div>
     <div class="weekly-foot">
-      <span id="weekly-note">Cada importação SOMA ao dia atual. Use "Desfazer" se importar por engano. Dados salvos no navegador, apagados só pelos botões.</span>
+      <span id="weekly-note">Escolha o dia no momento de importar. Cada importação SOMA ao dia escolhido. Use "Desfazer" se importar por engano. Dados salvos no navegador, apagados só pelos botões.</span>
       <span id="weekly-updated">—</span>
     </div>
   </div>
@@ -499,6 +510,8 @@ function openModal(panel){
     });
   }
   overlay.classList.add('open');
+  const daySel = document.getElementById('import-day');
+  if(daySel) daySel.value = todayKey();   // padrão: dia de hoje
   const activeTA = document.querySelector('.modal-panel.active textarea');
   if(activeTA) setTimeout(()=>activeTA.focus(),50);
 }
@@ -527,17 +540,20 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
 
   if(!rawWin && !rawWdo && !document.getElementById('paste-atv').value.trim()){ errEl.textContent='Cole os dados em pelo menos um dos campos.'; return; }
 
+  const daySel = document.getElementById('import-day');
+  const dayKey = (daySel && daySel.value) || todayKey();
+
   if(rawWin){
-    try{ applyPanel('win', rawWin); ok++; }
+    try{ applyPanel('win', rawWin, {day:dayKey}); ok++; }
     catch(e){ errMsg += 'WIN: '+e.message+' '; }
   }
   if(rawWdo){
-    try{ applyPanel('wdo', rawWdo); ok++; }
+    try{ applyPanel('wdo', rawWdo, {day:dayKey}); ok++; }
     catch(e){ errMsg += 'WDO: '+e.message+' '; }
   }
   const rawAtv = document.getElementById('paste-atv').value.trim();
   if(rawAtv){
-    try{ applyPanel('atv', rawAtv); ok++; }
+    try{ applyPanel('atv', rawAtv, {day:dayKey}); ok++; }
     catch(e){ errMsg += 'ATV: '+e.message+' '; }
   }
 
@@ -742,7 +758,7 @@ function applyPanel(prefix, raw, opts){
   renderVol(prefix+'-vol', groups);
   renderBrokers(prefix+'-br-buy', prefix+'-br-sell', rows);
   renderChart(prefix+'-chart', groups);
-  if(!opts || opts.record!==false) recordWeekly(prefix, groups);   // alimenta a tabela semanal
+  if(!opts || opts.record!==false) recordWeekly(prefix, groups, opts && opts.day);   // alimenta a tabela semanal
   if(!opts || opts.persist!==false) saveRaw(prefix, raw);          // guarda para reabrir
 }
 
@@ -843,9 +859,9 @@ function todayKey(){
   return DAY_KEYS[d-1];
 }
 
-function recordWeekly(prefix, groups){
+function recordWeekly(prefix, groups, dayKey){
   if(!weekState[prefix]) weekState[prefix] = {};
-  const dk = todayKey();
+  const dk = (dayKey && DAY_KEYS.indexOf(dayKey)!==-1) ? dayKey : todayKey();
   if(!weekState[prefix][dk]) weekState[prefix][dk] = emptyDay();
   const day = weekState[prefix][dk];
   const entry = {};
@@ -853,19 +869,29 @@ function recordWeekly(prefix, groups){
   // ACUMULA: soma esta importação ao saldo do dia e guarda no histórico (p/ desfazer)
   for(const k of GRP_ORDER) day.sum[k] += entry[k];
   day.hist.push(entry);
+  weekState[prefix]._lastDay = dk;   // lembra o último dia importado (p/ desfazer)
   weekState.updated = new Date().toLocaleString('pt-BR');
   saveWeek();
   renderWeekly();
 }
 
-// Desfaz a última importação registrada hoje no ativo indicado.
+// Desfaz a última importação registrada no ativo (no último dia importado).
 function undoTodayImport(asset){
-  const dk = todayKey();
-  const day = weekState[asset] && weekState[asset][dk];
-  if(!day || !day.hist.length){ return; }
+  const a = weekState[asset];
+  if(!a) return;
+  // usa o último dia importado; se não houver, cai no dia de hoje
+  let dk = a._lastDay && DAY_KEYS.indexOf(a._lastDay)!==-1 ? a._lastDay : todayKey();
+  if(!(a[dk] && a[dk].hist.length)){
+    // fallback: acha qualquer dia com histórico
+    dk = DAY_KEYS.find(d=>a[d] && a[d].hist.length);
+    if(!dk) return;
+  }
+  const day = a[dk];
   const last = day.hist.pop();
   for(const k of GRP_ORDER) day.sum[k] -= last[k];
-  if(!day.hist.length) delete weekState[asset][dk];   // sem importações -> remove o dia
+  if(!day.hist.length) delete a[dk];   // sem importações -> remove o dia
+  // recalcula o último dia importado
+  a._lastDay = DAY_KEYS.filter(d=>a[d] && a[d].hist.length).pop() || null;
   weekState.updated = new Date().toLocaleString('pt-BR');
   saveWeek();
   renderWeekly();
@@ -914,7 +940,7 @@ function renderWeeklyAsset(asset, bodyId, undoId){
   // habilita/desabilita o botão de desfazer deste ativo
   const undoBtn = document.getElementById(undoId);
   if(undoBtn){
-    const can = !!(data[tk] && data[tk].hist.length);
+    const can = DAY_KEYS.some(d=>data[d] && data[d].hist && data[d].hist.length);
     undoBtn.disabled = !can;
     undoBtn.style.opacity = can ? '1' : '.45';
     undoBtn.style.cursor  = can ? 'pointer' : 'not-allowed';
