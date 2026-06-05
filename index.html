@@ -355,6 +355,11 @@ Terra	12,90	-465330904	-13079"></textarea>
       </div>
       <div class="chart-wrap"><canvas id="win-chart" role="img" aria-label="Saldo acumulado WIN por grupo"></canvas></div>
     </div>
+
+    <div class="sec">Quantidade Líquida (Contratos)</div>
+    <div class="chart-outer">
+      <div class="chart-wrap"><canvas id="win-qty-chart" role="img" aria-label="Quantidade líquida WIN por grupo"></canvas></div>
+    </div>
   </div>
 
   <!-- ÍNDICE / WDO -->
@@ -403,6 +408,11 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="chart-legend-item"><div class="legend-line" style="background:#8b949e"></div>Outros</div>
       </div>
       <div class="chart-wrap"><canvas id="wdo-chart" role="img" aria-label="Saldo acumulado WDO por grupo"></canvas></div>
+    </div>
+
+    <div class="sec">Quantidade Líquida (Contratos)</div>
+    <div class="chart-outer">
+      <div class="chart-wrap"><canvas id="wdo-qty-chart" role="img" aria-label="Quantidade líquida WDO por grupo"></canvas></div>
     </div>
     <div class="ts" id="ts-footer">—</div>
   </div>
@@ -654,8 +664,12 @@ function computeGroups(rows){
   for(const r of rows){
     const grp=g[r.group]||g['OUT'];
     if(r.vol>=0) grp.buy+=r.vol; else grp.sell+=r.vol;
+    // quantidade líquida: usa o sinal do volume (compra +, venda −).
+    // se qty já vier com sinal próprio, respeita; senão aplica o sinal do vol.
+    const q = Math.abs(r.qty||0);
+    grp.qtyNet = (grp.qtyNet||0) + (r.vol>=0 ? q : -q);
   }
-  for(const k in g){ g[k].net=g[k].buy+g[k].sell; }
+  for(const k in g){ g[k].net=g[k].buy+g[k].sell; if(g[k].qtyNet===undefined) g[k].qtyNet=0; }
   return g;
 }
 
@@ -798,7 +812,49 @@ function renderChart(id, groups){
   });
 }
 
-// ─── APPLY PANEL ─────────────────────────────────────────────────────────────
+// Formata quantidade de contratos (sem R$): milhar com ponto, ou K/M.
+function fmtQty(v){
+  const a=Math.abs(v), s=v>0?'+':v<0?'-':'';
+  if(a>=1e6) return s+(a/1e6).toFixed(2)+'M';
+  if(a>=1e3) return s+(a/1e3).toFixed(1)+'K';
+  return s+Math.round(a);
+}
+
+// Gráfico de BARRAS: quantidade líquida (compra − venda) de contratos por grupo.
+function renderQtyChart(id, groups){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(charts[id]) charts[id].destroy();
+  const css = getComputedStyle(document.documentElement);
+  const cv = n => css.getPropertyValue(n).trim();
+  const tipBg=cv('--tip-bg'), tipBd=cv('--tip-border'), tipTitle=cv('--tip-title'),
+        tipBody=cv('--tip-body'), tick=cv('--text2'), grid=cv('--grid-line');
+  const ORDER=['EXT','INST','PF','OUT'];
+  const labels = ORDER.map(k=>GROUP_LABELS[k]);
+  const data   = ORDER.map(k=>groups[k].qtyNet||0);
+  const colors = data.map(v=> v>=0 ? cv('--green') || '#3fb950' : cv('--red') || '#f85149');
+
+  charts[id] = new Chart(el,{
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, borderRadius:3, maxBarThickness:48 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display:false },
+        tooltip:{
+          backgroundColor:tipBg, borderColor:tipBd, borderWidth:1,
+          titleColor:tipTitle, bodyColor:tipBody,
+          titleFont:{family:'Courier New',size:9}, bodyFont:{family:'Courier New',size:10},
+          callbacks:{ label: c=>' '+fmtQty(c.raw)+' contratos' }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:tick,font:{size:9,family:'Courier New'},maxRotation:0}, grid:{display:false}, border:{display:false} },
+        y:{ ticks:{color:tick,font:{size:9,family:'Courier New'}, callback:v=>fmtQty(v)}, grid:{color:grid}, border:{display:false} }
+      }
+    }
+  });
+}
 function applyPanel(prefix, raw, opts){
   const rows   = parseRows(raw);
   const groups = computeGroups(rows);
@@ -807,6 +863,7 @@ function applyPanel(prefix, raw, opts){
   renderVol(prefix+'-vol', groups);
   renderBrokers(prefix+'-br-buy', prefix+'-br-sell', rows);
   renderChart(prefix+'-chart', groups);
+  renderQtyChart(prefix+'-qty-chart', groups);
   if(!opts || opts.record!==false) recordWeekly(prefix, groups, opts && opts.day);   // alimenta a tabela semanal
   if(!opts || opts.persist!==false){
     const dk = (opts && opts.day) || todayKey();
@@ -902,6 +959,7 @@ function resetPanelDom(p){
   const emptyBr    = '<div class="empty" style="padding:10px"><span>Aguardando dados...</span></div>';
   const set = (id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
   if(charts[p+'-chart']){ charts[p+'-chart'].destroy(); delete charts[p+'-chart']; }
+  if(charts[p+'-qty-chart']){ charts[p+'-qty-chart'].destroy(); delete charts[p+'-qty-chart']; }
   set(p+'-parts', emptyParts);
   set(p+'-vol', emptyVol);
   set(p+'-br-buy', emptyBr);
@@ -1283,11 +1341,17 @@ function applyTheme(theme){
   else document.documentElement.removeAttribute('data-theme');
   try{ localStorage.setItem('fluxo_theme', theme); }catch(e){}
   updateThemeIcon();
-  // redesenha os gráficos para pegar as novas cores do tema
-  const store = loadRawStore();
+  // redesenha os gráficos para pegar as novas cores do tema (usa o dia exibido)
   for(const p of ['win','wdo']){
-    if(charts[p+'-chart'] && store[p]){
-      try{ const rows=parseRows(store[p]); renderChart(p+'-chart', computeGroups(rows)); }catch(e){}
+    const map = dayMapOf(loadRawStore(), p);
+    const dia = selectedDay[p];
+    const raw = dia ? map[dia] : null;
+    if(raw){
+      try{
+        const groups = computeGroups(parseRows(raw));
+        renderChart(p+'-chart', groups);
+        renderQtyChart(p+'-qty-chart', groups);
+      }catch(e){}
     }
   }
 }
