@@ -86,7 +86,7 @@ body{padding:12px}
 .modal-error{font-size:10px;color:var(--red);margin-top:6px;min-height:16px}
 
 /* DASH */
-.dash{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:1840px;margin:0 auto}
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:1840px;margin:0 auto}
 .top-bar{max-width:1840px!important}
 .panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s}
 .panel:hover{border-color:#3a414d}
@@ -161,10 +161,14 @@ body{padding:12px}
 /* ===== WEEKLY FLOW ===== */
 .weekly{max-width:1840px;margin:10px auto 0}
 .weekly-panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:var(--shadow)}
-.weekly-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border)}
-.weekly-head .wtitle{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+.weekly-head{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.weekly-head .wtitle{font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px}
 .weekly-head .wsub{font-size:9px;color:var(--text3)}
-.weekly-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.weekly-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;position:absolute;right:14px;top:50%;transform:translateY(-50%)}
+@media(max-width:560px){
+  .weekly-head{padding-top:9px}
+  .weekly-actions{position:static;transform:none;margin-top:6px}
+}
 .weekly-select{font-family:'Courier New',monospace;font-size:10px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:4px;padding:4px 8px;cursor:pointer;outline:none}
 .weekly-select:focus{border-color:var(--blue)}
 .wtbl-wrap{overflow-x:auto}
@@ -234,7 +238,6 @@ body{padding:12px}
     <div class="modal-tabs">
       <div class="modal-tab active" data-target="tab-win">Dólar — WIN</div>
       <div class="modal-tab" data-target="tab-wdo">Índice — WDO</div>
-      <div class="modal-tab" data-target="tab-atv">Ativo Livre</div>
     </div>
     <div class="modal-panel active" id="tab-win">
       <label>Dados do WIN (Dólar)</label>
@@ -248,15 +251,6 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="modal-panel" id="tab-wdo">
       <label>Dados do WDO (Índice)</label>
       <textarea id="paste-wdo" placeholder="Cole aqui os dados do WDO...
-Exemplo:
-Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
-XP	7,08	254623548	7181
-Morgan	9,70	349676978	9840
-Terra	12,90	-465330904	-13079"></textarea>
-    </div>
-    <div class="modal-panel" id="tab-atv">
-      <label>Dados do Ativo Livre</label>
-      <textarea id="paste-atv" placeholder="Cole aqui os dados do ativo livre...
 Exemplo:
 Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
 XP	7,08	254623548	7181
@@ -399,52 +393,6 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="ts" id="ts-footer">—</div>
   </div>
 
-  <!-- ATIVO LIVRE -->
-  <div class="panel" id="panel-atv">
-    <div class="panel-header">
-      <div class="panel-title">
-        <div class="title-left"><span class="cy" style="font-size:15px;color:#a371f7">▪</span> <input class="title-editable" id="atv-title-input" value="ATIVO" maxlength="20" title="Clique para editar o nome do ativo"></div>
-        <div class="price-block">
-          <div class="price-main" id="atv-price" style="color:#a371f7">—</div>
-          <div class="price-sub cm" id="atv-sub"><span class="import-link" onclick="openModal('atv')">Clique para importar dados</span></div>
-        </div>
-      </div>
-      <div class="panel-stats">
-        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="atv-s-buy">—</div></div>
-        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="atv-s-sell">—</div></div>
-        <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="atv-s-net">—</div></div>
-      </div>
-    </div>
-
-    <div class="sec">Participantes</div>
-    <div id="atv-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
-
-    <div class="sec">Posição % Volume</div>
-    <div class="vol-section" id="atv-vol"><div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div></div>
-
-    <div class="sec">Top Corretoras — Saldo</div>
-    <div class="br-cols">
-      <div class="br-col buy">
-        <div class="br-col-head"><span class="dot"></span>Comprando</div>
-        <div id="atv-br-buy"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
-      </div>
-      <div class="br-col sell">
-        <div class="br-col-head"><span class="dot"></span>Vendendo</div>
-        <div id="atv-br-sell"><div class="empty" style="padding:10px"><span>Aguardando dados...</span></div></div>
-      </div>
-    </div>
-
-    <div class="sec">Saldo Acumulado (R$ M)</div>
-    <div class="chart-outer">
-      <div class="chart-legend" id="atv-legend">
-        <div class="chart-legend-item"><div class="legend-line" style="background:#58a6ff"></div>Estrangeiro</div>
-        <div class="chart-legend-item"><div class="legend-line" style="background:#e3b341"></div>Bancos</div>
-        <div class="chart-legend-item"><div class="legend-line" style="background:#3fb950"></div>Pess. Física</div>
-        <div class="chart-legend-item"><div class="legend-line" style="background:#8b949e"></div>Outros</div>
-      </div>
-      <div class="chart-wrap"><canvas id="atv-chart" role="img" aria-label="Saldo acumulado Ativo Livre por grupo"></canvas></div>
-    </div>
-  </div>
 
 </div>
 
@@ -463,14 +411,14 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="weekly-grid">
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">📈 Índice (WDO)</span>
+          <span class="wcap">📈 Índice</span>
           <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada no WDO">↶ Desfazer último</button>
         </div>
         <div id="weekly-body-wdo"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">💵 Dólar (WIN)</span>
+          <span class="wcap">💵 Dólar</span>
           <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada no WIN">↶ Desfazer último</button>
         </div>
         <div id="weekly-body-win"></div>
@@ -479,6 +427,52 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="weekly-foot">
       <span id="weekly-note">Escolha o dia no momento de importar. Cada importação SOMA ao dia escolhido. Use "Desfazer" se importar por engano. Dados salvos no navegador, apagados só pelos botões.</span>
       <span id="weekly-updated">—</span>
+    </div>
+  </div>
+
+  <!-- ===== FLUXO MENSAL ===== -->
+  <div class="weekly-panel" style="margin-top:14px">
+    <div class="weekly-head">
+      <div>
+        <div class="wtitle"><span style="color:var(--blue)">▣</span> Fluxo Mensal — Saldo por Grupo</div>
+        <div class="wsub">Saldo líquido (R$) acumulado por mês — somado automaticamente a cada importação</div>
+      </div>
+      <div class="weekly-actions">
+        <button class="btn" id="btn-clear-month">Limpar mensal</button>
+      </div>
+    </div>
+    <div class="weekly-grid">
+      <div class="weekly-col">
+        <div id="month-body-wdo"></div>
+      </div>
+      <div class="weekly-col">
+        <div id="month-body-win"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== FLUXO ANUAL ===== -->
+  <div class="weekly-panel" style="margin-top:14px">
+    <div class="weekly-head">
+      <div>
+        <div class="wtitle"><span style="color:var(--blue)">▣</span> Fluxo Anual — Saldo por Grupo</div>
+        <div class="wsub">Saldo líquido (R$) acumulado por ano — somado automaticamente a cada importação</div>
+      </div>
+      <div class="weekly-actions">
+        <button class="btn" id="btn-clear-year">Limpar anual</button>
+      </div>
+    </div>
+    <div class="weekly-grid">
+      <div class="weekly-col">
+        <div id="year-body-wdo"></div>
+      </div>
+      <div class="weekly-col">
+        <div id="year-body-win"></div>
+      </div>
+    </div>
+    <div class="weekly-foot">
+      <span id="period-note">Os totais mensal e anual são alimentados automaticamente a cada importação. "Desfazer último" também reverte aqui.</span>
+      <span id="period-updated">—</span>
     </div>
   </div>
 </div>
@@ -501,7 +495,7 @@ function openModal(panel){
   targetPanel = panel || null;
   // Switch to correct tab if panel specified
   if(panel){
-    const target = panel==='win'?'tab-win':panel==='wdo'?'tab-wdo':'tab-atv';
+    const target = panel==='wdo'?'tab-wdo':'tab-win';
     document.querySelectorAll('.modal-tab').forEach(t=>{
       t.classList.toggle('active', t.dataset.target===target);
     });
@@ -538,7 +532,7 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
   const rawWin = document.getElementById('paste-win').value.trim();
   const rawWdo = document.getElementById('paste-wdo').value.trim();
 
-  if(!rawWin && !rawWdo && !document.getElementById('paste-atv').value.trim()){ errEl.textContent='Cole os dados em pelo menos um dos campos.'; return; }
+  if(!rawWin && !rawWdo){ errEl.textContent='Cole os dados em pelo menos um dos campos.'; return; }
 
   const daySel = document.getElementById('import-day');
   const dayKey = (daySel && daySel.value) || todayKey();
@@ -550,11 +544,6 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
   if(rawWdo){
     try{ applyPanel('wdo', rawWdo, {day:dayKey}); ok++; }
     catch(e){ errMsg += 'WDO: '+e.message+' '; }
-  }
-  const rawAtv = document.getElementById('paste-atv').value.trim();
-  if(rawAtv){
-    try{ applyPanel('atv', rawAtv, {day:dayKey}); ok++; }
-    catch(e){ errMsg += 'ATV: '+e.message+' '; }
   }
 
   if(errMsg){ errEl.textContent = errMsg; return; }
@@ -775,7 +764,7 @@ function saveRaw(prefix, raw){
 }
 function restorePanels(){
   const store = loadRawStore();
-  for(const p of ['win','wdo','atv']){
+  for(const p of ['win','wdo']){
     if(store[p]){
       try{ applyPanel(p, store[p], {record:false, persist:false}); }catch(e){}
     }
@@ -787,11 +776,12 @@ function resetPanelDom(p){
   const emptyParts = '<div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div>';
   const emptyVol   = '<div class="empty" style="padding:8px 0"><span>Aguardando dados...</span></div>';
   const emptyBr    = '<div class="empty" style="padding:10px"><span>Aguardando dados...</span></div>';
+  const set = (id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
   if(charts[p+'-chart']){ charts[p+'-chart'].destroy(); delete charts[p+'-chart']; }
-  document.getElementById(p+'-parts').innerHTML   = emptyParts;
-  document.getElementById(p+'-vol').innerHTML     = emptyVol;
-  document.getElementById(p+'-br-buy').innerHTML  = emptyBr;
-  document.getElementById(p+'-br-sell').innerHTML = emptyBr;
+  set(p+'-parts', emptyParts);
+  set(p+'-vol', emptyVol);
+  set(p+'-br-buy', emptyBr);
+  set(p+'-br-sell', emptyBr);
   ['-s-buy','-s-sell','-s-net'].forEach(s=>{
     const el=document.getElementById(p+s); if(el){ el.textContent='—'; el.className='stat-value'+(s==='-s-buy'?' cg':s==='-s-sell'?' cr':''); }
   });
@@ -802,12 +792,12 @@ function resetPanelDom(p){
 function clearPanels(){
   // Apaga apenas os dados importados dos painéis. NÃO mexe na tabela semanal.
   try{ if(typeof localStorage!=='undefined') localStorage.removeItem(RAW_KEY); }catch(e){}
-  ['win','wdo','atv'].forEach(resetPanelDom);
-  ['paste-win','paste-wdo','paste-atv'].forEach(id=>{ const t=document.getElementById(id); if(t) t.value=''; });
+  ['win','wdo'].forEach(resetPanelDom);
+  ['paste-win','paste-wdo'].forEach(id=>{ const t=document.getElementById(id); if(t) t.value=''; });
 }
 
 document.getElementById('btn-clear-panels').addEventListener('click', ()=>{
-  if(confirm('Limpar os dados importados dos painéis (WIN, WDO e Ativo Livre)?\n\nA tabela de fluxo semanal NÃO será apagada.')){
+  if(confirm('Limpar os dados importados dos painéis (WIN e WDO)?\n\nA tabela de fluxo semanal NÃO será apagada.')){
     clearPanels();
   }
 });
@@ -836,7 +826,7 @@ function loadWeek(){
     if(old){
       const o=JSON.parse(old);
       const ns={ win:{}, wdo:{}, atv:{}, updated:o.updated||null };
-      for(const asset of ['win','wdo','atv']){
+      for(const asset of ['win','wdo']){
         const a=o[asset]||{};
         for(const dk of DAY_KEYS){
           if(a[dk]){
@@ -866,12 +856,17 @@ function recordWeekly(prefix, groups, dayKey){
   const day = weekState[prefix][dk];
   const entry = {};
   for(const k of GRP_ORDER) entry[k] = groups[k].net;
+  // marca o mês/ano em que esta importação foi somada (p/ desfazer com precisão)
+  const pk = periodKeys();
+  entry._mk = pk.mk; entry._yk = pk.yk;
   // ACUMULA: soma esta importação ao saldo do dia e guarda no histórico (p/ desfazer)
   for(const k of GRP_ORDER) day.sum[k] += entry[k];
   day.hist.push(entry);
   weekState[prefix]._lastDay = dk;   // lembra o último dia importado (p/ desfazer)
   weekState.updated = new Date().toLocaleString('pt-BR');
   saveWeek();
+  // alimenta também os acumulados mensal e anual
+  recordPeriod(prefix, entry, pk);
   renderWeekly();
 }
 
@@ -894,6 +889,8 @@ function undoTodayImport(asset){
   a._lastDay = DAY_KEYS.filter(d=>a[d] && a[d].hist.length).pop() || null;
   weekState.updated = new Date().toLocaleString('pt-BR');
   saveWeek();
+  // reverte também o acumulado mensal/anual desta importação (só se foi registrada no novo sistema)
+  if(last && last._mk) undoPeriod(asset, last);
   renderWeekly();
 }
 
@@ -964,7 +961,126 @@ document.getElementById('btn-clear-week').addEventListener('click', ()=>{
   }
 });
 
+// ─── FLUXO MENSAL / ANUAL ─────────────────────────────────────────────────────
+const PERIOD_KEY = 'fluxo_periodo_v1';
+const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+// estado: { win:{ months:{ "2026-06":{EXT,INST,PF,OUT,imp} }, years:{ "2026":{...} } }, wdo:{...}, updated }
+let periodState = loadPeriod();
+
+function loadPeriod(){
+  try{
+    const raw=(typeof localStorage!=='undefined') && localStorage.getItem(PERIOD_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { win:{months:{},years:{}}, wdo:{months:{},years:{}}, updated:null };
+}
+function savePeriod(){
+  try{ if(typeof localStorage!=='undefined') localStorage.setItem(PERIOD_KEY, JSON.stringify(periodState)); }catch(e){}
+}
+function periodKeys(){
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  return { mk: y+'-'+m, yk: String(y) };
+}
+function emptyBucket(){ return {EXT:0,INST:0,PF:0,OUT:0,imp:0}; }
+
+function recordPeriod(asset, entry, pk){
+  if(!periodState[asset]) periodState[asset]={months:{},years:{}};
+  const a = periodState[asset];
+  if(!a.months[pk.mk]) a.months[pk.mk]=emptyBucket();
+  if(!a.years[pk.yk])  a.years[pk.yk]=emptyBucket();
+  for(const k of GRP_ORDER){ a.months[pk.mk][k]+=entry[k]; a.years[pk.yk][k]+=entry[k]; }
+  a.months[pk.mk].imp++; a.years[pk.yk].imp++;
+  periodState.updated = new Date().toLocaleString('pt-BR');
+  savePeriod();
+}
+
+function undoPeriod(asset, entry){
+  // usa o mês/ano que foram marcados na importação; fallback p/ atual
+  const a = periodState[asset]; if(!a) return;
+  const pk = periodKeys();
+  const mk = entry._mk || pk.mk;
+  const yk = entry._yk || pk.yk;
+  if(a.months[mk]){
+    for(const k of GRP_ORDER) a.months[mk][k]-=entry[k];
+    a.months[mk].imp=Math.max(0,(a.months[mk].imp||1)-1);
+    if(a.months[mk].imp===0) delete a.months[mk];
+  }
+  if(a.years[yk]){
+    for(const k of GRP_ORDER) a.years[yk][k]-=entry[k];
+    a.years[yk].imp=Math.max(0,(a.years[yk].imp||1)-1);
+    if(a.years[yk].imp===0) delete a.years[yk];
+  }
+  periodState.updated = new Date().toLocaleString('pt-BR');
+  savePeriod();
+  renderPeriod();
+}
+
+// Renderiza uma tabela período (linhas = chaves; rótulos via labelFn) de um ativo.
+function renderPeriodAsset(asset, scope, bodyId, labelFn){
+  const a = periodState[asset] || {months:{},years:{}};
+  const store = scope==='month' ? (a.months||{}) : (a.years||{});
+  const body = document.getElementById(bodyId);
+  if(!body) return;
+  const keys = Object.keys(store).sort();   // ordem cronológica
+  if(!keys.length){
+    body.innerHTML = `<div class="weekly-empty"><strong>Sem dados ${scope==='month'?'no mês':'no ano'}</strong>
+      Importe os dados deste ativo — o saldo é somado aqui.</div>`;
+    return;
+  }
+  let h = `<div class="wtbl-wrap"><table class="wtbl"><thead><tr>
+    <th>${scope==='month'?'Mês':'Ano'}</th><th>Estr.</th><th>Banc.</th><th>PF</th><th>Outros</th>
+    <th>Saldo</th><th>Imp.</th></tr></thead><tbody>`;
+  const totals = {EXT:0,INST:0,PF:0,OUT:0}; let totImp=0;
+  for(const key of keys){
+    const b = store[key];
+    let rowTot=0, cells='';
+    for(const g of GRP_ORDER){
+      const v=b[g]||0; rowTot+=v; totals[g]+=v;
+      cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
+    }
+    totImp += b.imp||0;
+    h += `<tr><td>${labelFn(key)}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${b.imp||0}×</td></tr>`;
+  }
+  const grand = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
+  let totCells='';
+  for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
+  h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grand)}">${fmtV(grand)}</td><td class="cm">${totImp}×</td></tr>`;
+  h += `</tbody></table></div>`;
+  body.innerHTML = h;
+}
+
+function monthLabel(mk){ const [y,m]=mk.split('-'); return MONTH_NAMES[parseInt(m,10)-1]+'/'+y.slice(2); }
+function yearLabel(yk){ return yk; }
+
+function renderPeriod(){
+  renderPeriodAsset('wdo','month','month-body-wdo',monthLabel);
+  renderPeriodAsset('win','month','month-body-win',monthLabel);
+  renderPeriodAsset('wdo','year','year-body-wdo',yearLabel);
+  renderPeriodAsset('win','year','year-body-win',yearLabel);
+  const u=document.getElementById('period-updated');
+  if(u) u.textContent = periodState.updated ? 'Atualizado: '+periodState.updated : '—';
+}
+
+document.getElementById('btn-clear-month').addEventListener('click', ()=>{
+  if(confirm('Limpar os acumulados MENSAIS (todos os meses e ativos)?')){
+    for(const as of ['win','wdo']){ if(periodState[as]) periodState[as].months={}; }
+    periodState.updated = new Date().toLocaleString('pt-BR');
+    savePeriod(); renderPeriod();
+  }
+});
+document.getElementById('btn-clear-year').addEventListener('click', ()=>{
+  if(confirm('Limpar os acumulados ANUAIS (todos os anos e ativos)?')){
+    for(const as of ['win','wdo']){ if(periodState[as]) periodState[as].years={}; }
+    periodState.updated = new Date().toLocaleString('pt-BR');
+    savePeriod(); renderPeriod();
+  }
+});
+
 renderWeekly();
+renderPeriod();
 restorePanels();
 
 // ─── TEMA CLARO/ESCURO ────────────────────────────────────────────────────────
@@ -986,7 +1102,7 @@ function applyTheme(theme){
   updateThemeIcon();
   // redesenha os gráficos para pegar as novas cores do tema
   const store = loadRawStore();
-  for(const p of ['win','wdo','atv']){
+  for(const p of ['win','wdo']){
     if(charts[p+'-chart'] && store[p]){
       try{ const rows=parseRows(store[p]); renderChart(p+'-chart', computeGroups(rows)); }catch(e){}
     }
@@ -999,7 +1115,7 @@ updateThemeIcon();
 
 // ─── EXPORTAR / IMPORTAR BACKUP ───────────────────────────────────────────────
 // Empacota tudo que fica salvo no navegador num arquivo .json, para levar a outro PC.
-const BACKUP_KEYS = ['fluxo_raw_v1','fluxo_semanal_v2','fluxo_semanal_v1','fluxo_theme'];
+const BACKUP_KEYS = ['fluxo_raw_v1','fluxo_semanal_v2','fluxo_semanal_v1','fluxo_periodo_v1','fluxo_theme'];
 
 function exportBackup(){
   const data = {};
@@ -1038,10 +1154,12 @@ function applyImportedStore(store){
   }
   // recarrega o estado em memória a partir do que foi gravado
   try{ weekState = loadWeek(); }catch(e){}
+  try{ periodState = loadPeriod(); }catch(e){}
   // limpa os painéis na tela antes de restaurar (evita resíduo do estado anterior)
-  try{ ['win','wdo','atv'].forEach(resetPanelDom); }catch(e){}
+  try{ ['win','wdo'].forEach(resetPanelDom); }catch(e){}
   try{ restorePanels(); }catch(e){}
   try{ renderWeekly(); }catch(e){}
+  try{ renderPeriod(); }catch(e){}
   // aplica o tema importado, se houver
   try{
     const t = localStorage.getItem('fluxo_theme');
