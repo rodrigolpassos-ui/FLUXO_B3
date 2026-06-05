@@ -632,6 +632,13 @@ function fmtM(v){
   if(a>=1e6) return s+(a/1e6).toFixed(1)+'M';
   return s+a.toFixed(0);
 }
+// Saldo: mantém a MESMA escala das colunas (M/B) p/ não confundir.
+// Nunca desce para K ou reais cheios — saldos pequenos viram p.ex. "+R$ 0.0M".
+function fmtSaldo(v){
+  const a=Math.abs(v), s=v>=0?'+':'-';
+  if(a>=1e9) return s+'R$ '+(a/1e9).toFixed(2)+'B';
+  return s+'R$ '+(a/1e6).toFixed(1)+'M';
+}
 function cc(v){ return v>0?'cg':v<0?'cr':'cm'; }
 function badge(v){ return v>0?'<span class="badge b-buy">COMPRADO</span>':v<0?'<span class="badge b-sell">VENDIDO</span>':'<span class="badge b-neu">NEUTRO</span>'; }
 
@@ -936,12 +943,12 @@ function renderWeeklyAsset(asset, bodyId, undoId){
         const v = day.sum[g] || 0; rowTot += v; totals[g] += v;
         cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
       }
-      h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${day.hist.length}×</td></tr>`;
+      h += `<tr${isToday?' class="wtoday"':''}><td>${DAY_NAMES[dk]}</td>${cells}<td class="${cc(rowTot)}">${fmtSaldo(rowTot)}</td><td class="cm">${day.hist.length}×</td></tr>`;
     }
     const grandTot = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
     let totCells = '';
     for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
-    h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grandTot)}">${fmtV(grandTot)}</td><td></td></tr>`;
+    h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grandTot)}">${fmtSaldo(grandTot)}</td><td></td></tr>`;
     h += `</tbody></table></div>`;
     body.innerHTML = h;
   }
@@ -1054,12 +1061,12 @@ function renderPeriodAsset(asset, scope, bodyId, labelFn){
       cells += `<td class="${cc(v)}">${v?fmtV(v):'0'}</td>`;
     }
     totImp += b.imp||0;
-    h += `<tr><td>${labelFn(key)}</td>${cells}<td class="${cc(rowTot)}">${fmtV(rowTot)}</td><td class="cm">${b.imp||0}×</td></tr>`;
+    h += `<tr><td>${labelFn(key)}</td>${cells}<td class="${cc(rowTot)}">${fmtSaldo(rowTot)}</td><td class="cm">${b.imp||0}×</td></tr>`;
   }
   const grand = GRP_ORDER.reduce((s,g)=>s+totals[g],0);
   let totCells='';
   for(const g of GRP_ORDER) totCells += `<td class="${cc(totals[g])}">${fmtV(totals[g])}</td>`;
-  h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grand)}">${fmtV(grand)}</td><td class="cm">${totImp}×</td></tr>`;
+  h += `<tr class="wtotal"><td>Total</td>${totCells}<td class="${cc(grand)}">${fmtSaldo(grand)}</td><td class="cm">${totImp}×</td></tr>`;
   h += `</tbody></table></div>`;
   body.innerHTML = h;
 }
