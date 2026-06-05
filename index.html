@@ -102,6 +102,16 @@ body{padding:12px}
 .stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
 .stat-value{font-size:11px;font-weight:700;margin-top:2px}
 
+/* Abas de dia (Seg–Sex) por painel */
+.day-tabs{display:flex;gap:4px;padding:6px 12px 0;flex-wrap:wrap}
+.day-tab{font-size:10px;font-family:'Courier New',monospace;padding:3px 10px;border:1px solid var(--border);
+  border-radius:4px;background:var(--bg3);color:var(--text2);cursor:pointer;user-select:none;position:relative}
+.day-tab:hover{color:var(--text);border-color:var(--blue)}
+.day-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.day-tab.has-data::after{content:'';position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--green)}
+.day-tab.active.has-data::after{background:#fff}
+.day-tab.empty-day{opacity:.5}
+
 .sec{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;padding:5px 12px 3px;border-top:1px solid var(--border)}
 
 .tbl{width:100%;border-collapse:collapse}
@@ -315,6 +325,8 @@ Terra	12,90	-465330904	-13079"></textarea>
       </div>
     </div>
 
+    <div class="day-tabs" id="win-tabs"></div>
+
     <div class="sec">Participantes</div>
     <div id="win-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
 
@@ -361,6 +373,8 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="wdo-s-net">—</div></div>
       </div>
     </div>
+
+    <div class="day-tabs" id="wdo-tabs"></div>
 
     <div class="sec">Participantes</div>
     <div id="wdo-parts"><div class="empty"><strong>Sem dados</strong>Use o botão "Importar Dados"</div></div>
@@ -794,26 +808,90 @@ function applyPanel(prefix, raw, opts){
   renderBrokers(prefix+'-br-buy', prefix+'-br-sell', rows);
   renderChart(prefix+'-chart', groups);
   if(!opts || opts.record!==false) recordWeekly(prefix, groups, opts && opts.day);   // alimenta a tabela semanal
-  if(!opts || opts.persist!==false) saveRaw(prefix, raw);          // guarda para reabrir
+  if(!opts || opts.persist!==false){
+    const dk = (opts && opts.day) || todayKey();
+    saveRaw(prefix, raw, dk);        // guarda o cru DESTE dia
+    selectedDay[prefix] = dk;        // passa a exibir o dia recém-importado
+    if(typeof renderDayTabs==='function') renderDayTabs(prefix);
+  }
 }
 
-// ─── PERSISTÊNCIA DOS PAINÉIS ─────────────────────────────────────────────────
+// ─── PERSISTÊNCIA DOS PAINÉIS (por dia) ───────────────────────────────────────
+// Estrutura nova: store[prefix] = { mon:"raw", tue:"raw", ... }
+// Retrocompatível: se store[prefix] for string (formato antigo), vira o dia atual.
 const RAW_KEY = 'fluxo_raw_v1';
+const DAY_TAB_ORDER = ['mon','tue','wed','thu','fri'];
+const selectedDay = { win:null, wdo:null };  // dia atualmente exibido em cada painel
+
 function loadRawStore(){
   try{ const r=(typeof localStorage!=='undefined')&&localStorage.getItem(RAW_KEY); if(r) return JSON.parse(r); }catch(e){}
   return {};
 }
-function saveRaw(prefix, raw){
+// Normaliza o registro de um ativo para o formato por dia.
+function dayMapOf(store, prefix){
+  const v = store[prefix];
+  if(!v) return {};
+  if(typeof v === 'string'){ return { [todayKey()]: v }; }  // formato antigo
+  return v;
+}
+function saveRaw(prefix, raw, dayKey){
   const store = loadRawStore();
-  store[prefix] = raw;
+  const map = dayMapOf(store, prefix);
+  map[dayKey || todayKey()] = raw;
+  store[prefix] = map;
   try{ if(typeof localStorage!=='undefined') localStorage.setItem(RAW_KEY, JSON.stringify(store)); }catch(e){}
 }
+
+// Desenha as abas de dia de um painel e liga os cliques.
+function renderDayTabs(prefix){
+  const wrap = document.getElementById(prefix+'-tabs');
+  if(!wrap) return;
+  const map = dayMapOf(loadRawStore(), prefix);
+  const diasComDados = DAY_TAB_ORDER.filter(d=>map[d]);
+  // se nada selecionado, escolhe o último dia com dados
+  if(!selectedDay[prefix] || !map[selectedDay[prefix]]){
+    selectedDay[prefix] = diasComDados.length ? diasComDados[diasComDados.length-1] : null;
+  }
+  let h='';
+  for(const d of DAY_TAB_ORDER){
+    const tem = !!map[d];
+    const cls = ['day-tab', tem?'has-data':'empty-day', selectedDay[prefix]===d?'active':''].join(' ');
+    h += `<div class="${cls}" data-prefix="${prefix}" data-day="${d}">${DAY_NAMES[d]}</div>`;
+  }
+  wrap.innerHTML = h;
+  wrap.querySelectorAll('.day-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const day = t.getAttribute('data-day');
+      const m = dayMapOf(loadRawStore(), prefix);
+      if(!m[day]){ return; }  // dia sem dados: não faz nada
+      selectedDay[prefix] = day;
+      showDay(prefix, day);
+    });
+  });
+}
+
+// Mostra o painel completo de um dia específico (sem re-registrar no semanal).
+function showDay(prefix, dayKey){
+  const map = dayMapOf(loadRawStore(), prefix);
+  const raw = map[dayKey];
+  if(raw){
+    try{ applyPanel(prefix, raw, {record:false, persist:false}); }catch(e){}
+  } else {
+    resetPanelDom(prefix);
+  }
+  renderDayTabs(prefix);
+}
+
 function restorePanels(){
-  const store = loadRawStore();
   for(const p of ['win','wdo']){
-    if(store[p]){
-      try{ applyPanel(p, store[p], {record:false, persist:false}); }catch(e){}
+    const map = dayMapOf(loadRawStore(), p);
+    const dias = DAY_TAB_ORDER.filter(d=>map[d]);
+    const dia = dias.length ? dias[dias.length-1] : null;
+    selectedDay[p] = dia;
+    if(dia){
+      try{ applyPanel(p, map[dia], {record:false, persist:false}); }catch(e){}
     }
+    renderDayTabs(p);
   }
 }
 
@@ -838,7 +916,7 @@ function resetPanelDom(p){
 function clearPanels(){
   // Apaga apenas os dados importados dos painéis. NÃO mexe na tabela semanal.
   try{ if(typeof localStorage!=='undefined') localStorage.removeItem(RAW_KEY); }catch(e){}
-  ['win','wdo'].forEach(resetPanelDom);
+  ['win','wdo'].forEach(p=>{ selectedDay[p]=null; resetPanelDom(p); renderDayTabs(p); });
   ['paste-win','paste-wdo'].forEach(id=>{ const t=document.getElementById(id); if(t) t.value=''; });
 }
 
