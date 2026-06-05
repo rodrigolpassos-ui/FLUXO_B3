@@ -413,6 +413,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="weekly-col-head">
           <span class="wcap">💵 Dólar</span>
           <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada no WIN">↶ Desfazer último</button>
+          <button class="btn btn-mini" id="btn-clearweek-win" title="Apaga a semana só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="weekly-body-win"></div>
       </div>
@@ -420,6 +421,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         <div class="weekly-col-head">
           <span class="wcap">📈 Índice</span>
           <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada no WDO">↶ Desfazer último</button>
+          <button class="btn btn-mini" id="btn-clearweek-wdo" title="Apaga a semana só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="weekly-body-wdo"></div>
       </div>
@@ -446,12 +448,14 @@ Terra	12,90	-465330904	-13079"></textarea>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">💵 Dólar</span>
+          <button class="btn btn-mini" id="btn-clearmonth-win" title="Apaga o mensal só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="month-body-win"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">📈 Índice</span>
+          <button class="btn btn-mini" id="btn-clearmonth-wdo" title="Apaga o mensal só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="month-body-wdo"></div>
       </div>
@@ -473,12 +477,14 @@ Terra	12,90	-465330904	-13079"></textarea>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">💵 Dólar</span>
+          <button class="btn btn-mini" id="btn-clearyear-win" title="Apaga o anual só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="year-body-win"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
           <span class="wcap">📈 Índice</span>
+          <button class="btn btn-mini" id="btn-clearyear-wdo" title="Apaga o anual só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="year-body-wdo"></div>
       </div>
@@ -981,6 +987,18 @@ document.getElementById('btn-clear-week').addEventListener('click', ()=>{
   }
 });
 
+// Limpa a SEMANA de um único ativo (win=Dólar, wdo=Índice).
+function clearWeekAsset(asset, nome){
+  if(confirm('Limpar a SEMANA só do '+nome+'?\n\nO outro ativo não será afetado.')){
+    weekState[asset] = {};
+    weekState.updated = new Date().toLocaleString('pt-BR');
+    saveWeek();
+    renderWeekly();
+  }
+}
+document.getElementById('btn-clearweek-win').addEventListener('click', ()=>clearWeekAsset('win','Dólar'));
+document.getElementById('btn-clearweek-wdo').addEventListener('click', ()=>clearWeekAsset('wdo','Índice'));
+
 // ─── FLUXO MENSAL / ANUAL ─────────────────────────────────────────────────────
 const PERIOD_KEY = 'fluxo_periodo_v1';
 const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -1131,6 +1149,20 @@ document.getElementById('btn-clear-year').addEventListener('click', ()=>{
     savePeriod(); renderPeriod();
   }
 });
+
+// Limpa MENSAL ou ANUAL de um único ativo.
+function clearPeriodAsset(asset, scope, nome){
+  const escopo = scope==='months' ? 'MENSAL' : 'ANUAL';
+  if(confirm('Limpar o '+escopo+' só do '+nome+'?\n\nO outro ativo não será afetado.')){
+    if(periodState[asset]) periodState[asset][scope] = {};
+    periodState.updated = new Date().toLocaleString('pt-BR');
+    savePeriod(); renderPeriod();
+  }
+}
+document.getElementById('btn-clearmonth-win').addEventListener('click', ()=>clearPeriodAsset('win','months','Dólar'));
+document.getElementById('btn-clearmonth-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','months','Índice'));
+document.getElementById('btn-clearyear-win').addEventListener('click', ()=>clearPeriodAsset('win','years','Dólar'));
+document.getElementById('btn-clearyear-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','years','Índice'));
 
 renderWeekly();
 renderPeriod();
