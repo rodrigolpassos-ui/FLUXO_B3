@@ -299,6 +299,7 @@ Terra	12,90	-465330904	-13079"></textarea>
     <button class="btn" id="btn-import">📂 Importar backup</button>
     <input type="file" id="file-import" accept=".json,application/json" style="display:none">
     <button class="btn" id="btn-clear-panels">🗑 Limpar painéis</button>
+    <button class="btn" id="btn-report">📄 Relatório PDF</button>
     <button class="theme-toggle" id="btn-theme" title="Alternar tema claro/escuro" aria-label="Alternar tema">
       <span class="theme-ico" id="theme-ico">☀</span>
     </button>
@@ -983,6 +984,151 @@ document.getElementById('btn-clear-panels').addEventListener('click', ()=>{
     clearPanels();
   }
 });
+
+// ─── RELATÓRIO PDF ────────────────────────────────────────────────────────────
+// Monta um documento HTML formatado em nova janela e dispara a impressão,
+// onde o usuário escolhe "Salvar como PDF". Não depende de bibliotecas externas.
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Tabela de participantes do dia exibido (a partir do cru salvo).
+function reportDayTable(prefix){
+  const map = dayMapOf(loadRawStore(), prefix);
+  const dia = selectedDay[prefix];
+  const raw = dia ? map[dia] : null;
+  if(!raw){ return '<p class="muted">Sem dados importados.</p>'; }
+  let groups;
+  try{ groups = computeGroups(parseRows(raw)); }catch(e){ return '<p class="muted">Dados inválidos.</p>'; }
+  let rows='';
+  for(const k of GRP_ORDER){
+    const g=groups[k];
+    const pos = g.net>0?'COMPRADO':g.net<0?'VENDIDO':'NEUTRO';
+    rows += `<tr>
+      <td>${esc(GROUP_LABELS[k])}</td>
+      <td class="r pos">${fmtV(g.buy)}</td>
+      <td class="r neg">${fmtV(g.sell)}</td>
+      <td class="r ${g.net>=0?'pos':'neg'}">${fmtV(g.net)}</td>
+      <td class="r ${g.qtyNet>=0?'pos':'neg'}">${fmtQty(g.qtyNet)}</td>
+      <td class="c">${pos}</td>
+    </tr>`;
+  }
+  const diaNome = (DAY_NAMES[dia]||dia||'—');
+  return `<div class="subt">Dia exibido: <b>${esc(diaNome)}</b></div>
+    <table>
+      <thead><tr><th>Participante</th><th class="r">Compra</th><th class="r">Venda</th><th class="r">Saldo</th><th class="r">Qtd. Líq.</th><th class="c">Posição</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// Tabela de período (semana/mês/ano) de um ativo.
+function reportPeriodTable(buckets, labelFn, colLabel){
+  const keys = Object.keys(buckets).sort();
+  if(!keys.length) return '<p class="muted">Sem dados.</p>';
+  let rows='', tot={EXT:0,INST:0,PF:0,OUT:0}, totImp=0;
+  for(const key of keys){
+    const b=buckets[key]; let rowTot=0, cells='';
+    for(const g of GRP_ORDER){ const v=b[g]||0; rowTot+=v; tot[g]+=v; cells+=`<td class="r ${v>=0?'pos':'neg'}">${fmtV(v)}</td>`; }
+    totImp += b.imp||0;
+    rows += `<tr><td>${esc(labelFn(key))}</td>${cells}<td class="r ${rowTot>=0?'pos':'neg'}">${fmtSaldo(rowTot)}</td><td class="c">${b.imp||0}×</td></tr>`;
+  }
+  const grand=GRP_ORDER.reduce((s,g)=>s+tot[g],0);
+  let totCells=''; for(const g of GRP_ORDER) totCells+=`<td class="r ${tot[g]>=0?'pos':'neg'}">${fmtV(tot[g])}</td>`;
+  rows += `<tr class="tot"><td>Total</td>${totCells}<td class="r ${grand>=0?'pos':'neg'}">${fmtSaldo(grand)}</td><td class="c">${totImp}×</td></tr>`;
+  return `<table>
+    <thead><tr><th>${esc(colLabel)}</th><th class="r">Estr.</th><th class="r">Banc.</th><th class="r">PF</th><th class="r">Outros</th><th class="r">Saldo</th><th class="c">Imp.</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+}
+
+// Reconstrói os buckets semanais (por dia) de um ativo para o relatório.
+function weeklyBucketsForReport(asset){
+  const data = weekState[asset] || {};
+  const out = {};
+  let idx=0;
+  for(const dk of DAY_KEYS){
+    if(data[dk]){
+      const d=data[dk];
+      out[String(idx)+'_'+dk] = { EXT:d.sum.EXT, INST:d.sum.INST, PF:d.sum.PF, OUT:d.sum.OUT, imp:(d.hist?d.hist.length:0), _dk:dk };
+    }
+    idx++;
+  }
+  return out;
+}
+
+function buildReportHTML(){
+  const now = new Date();
+  const quando = now.toLocaleString('pt-BR');
+  const sec = (titulo, conteudo) => `<h2>${esc(titulo)}</h2>${conteudo}`;
+
+  const assets = [['win','Dólar'],['wdo','Índice']];
+
+  // 1) Dia exibido
+  let diaSec='';
+  for(const [a,nome] of assets){
+    diaSec += `<h3>${esc(nome)}</h3>` + reportDayTable(a);
+  }
+
+  // 2) Semanal
+  let semSec='';
+  for(const [a,nome] of assets){
+    const b = weeklyBucketsForReport(a);
+    semSec += `<h3>${esc(nome)}</h3>` + reportPeriodTable(b, k=>DAY_NAMES[k.split('_')[1]]||k, 'Dia');
+  }
+
+  // 3) Mensal
+  let mesSec='';
+  for(const [a,nome] of assets){
+    const b = (periodState[a]&&periodState[a].months)||{};
+    mesSec += `<h3>${esc(nome)}</h3>` + reportPeriodTable(b, monthLabel, 'Mês');
+  }
+
+  // 4) Anual
+  let anoSec='';
+  for(const [a,nome] of assets){
+    const b = (periodState[a]&&periodState[a].years)||{};
+    anoSec += `<h3>${esc(nome)}</h3>` + reportPeriodTable(b, yearLabel, 'Ano');
+  }
+
+  return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+  <title>Relatório de Fluxo Financeiro</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Arial,Helvetica,sans-serif;color:#1a1a1a;margin:24px;font-size:12px}
+    h1{font-size:20px;margin:0 0 2px}
+    .when{color:#666;font-size:11px;margin-bottom:16px}
+    h2{font-size:14px;margin:22px 0 8px;padding-bottom:4px;border-bottom:2px solid #333}
+    h3{font-size:12px;margin:12px 0 4px;color:#444}
+    table{width:100%;border-collapse:collapse;margin-bottom:10px}
+    th,td{border:1px solid #ccc;padding:4px 7px;text-align:left}
+    th{background:#f0f0f0;font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+    td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+    td.c,th.c{text-align:center}
+    .pos{color:#127a2e}
+    .neg{color:#b3261e}
+    tr.tot td{font-weight:bold;background:#fafafa}
+    .muted{color:#888;font-style:italic}
+    .subt{font-size:11px;color:#555;margin-bottom:4px}
+    @media print{ body{margin:12mm} h2{page-break-after:avoid} table{page-break-inside:avoid} }
+  </style></head><body>
+    <h1>Fluxo Financeiro — Relatório</h1>
+    <div class="when">Gerado em ${esc(quando)}</div>
+    ${sec('1. Painel do Dia', diaSec)}
+    ${sec('2. Fluxo Semanal', semSec)}
+    ${sec('3. Fluxo Mensal', mesSec)}
+    ${sec('4. Fluxo Anual', anoSec)}
+  </body></html>`;
+}
+
+function gerarRelatorio(){
+  const html = buildReportHTML();
+  const win = window.open('', '_blank');
+  if(!win){ alert('Não foi possível abrir a janela do relatório. Verifique se o navegador bloqueou pop-ups.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  // espera renderizar antes de abrir a caixa de impressão
+  win.onload = function(){ setTimeout(()=>{ try{ win.focus(); win.print(); }catch(e){} }, 300); };
+}
+
+document.getElementById('btn-report').addEventListener('click', gerarRelatorio);
 
 // ─── FLUXO SEMANAL ────────────────────────────────────────────────────────────
 const WEEK_KEY  = 'fluxo_semanal_v2';   // v2: dia acumula importações + histórico p/ desfazer
