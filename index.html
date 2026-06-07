@@ -443,7 +443,7 @@ tr:hover td{background:var(--surface2);}
       <div class="result-card"><div class="result-label">Perda Máxima</div><div class="result-value neg" id="rPerda">—</div></div>
       <div class="result-card"><div class="result-label">Break-Even</div><div class="result-value neutral" id="rBE">—</div></div>
       <div class="result-card" title="Estimativa: se há hedge (spread/coberta), usa a perda máxima da estrutura. Se venda descoberta, usa ~20% do nocional (strike × qtd). A margem real da B3 usa SPAN."><div class="result-label">Margem Aprox. ⓘ</div><div class="result-value neutral" id="rMargem">R$ 0,00</div></div>
-      <div class="result-card highlight" title="Para spreads: largura do spread × qtd (risco máximo de exercício). Para posições simples: strike × qtd."><div class="result-label">Notional Máx ⓘ</div><div class="result-value neutral" id="rNotional">R$ 0,00</div></div>
+      <div class="result-card highlight" title="Capital máximo em risco no exercício. Para estruturas de risco limitado (travas, condores, compra de opções): igual à perda máxima possível. Para vendas a descoberto (call/ativo sem cobertura): exposição nocional das pernas vendidas (strike × qtd), pois a perda é teoricamente ilimitada."><div class="result-label">Notional Máx ⓘ</div><div class="result-value neutral" id="rNotional">R$ 0,00</div></div>
     </div>
 
     <!-- Chart -->
@@ -1195,18 +1195,37 @@ function updateResults(){
     return;
   }
   const S = currentPrice || positions[0].preco || 50;
-  const range = S > 0 ? S : 50;
+  // Limites da grade: cobrem o spot ±50% E todos os strikes/preços da estrutura, com folga,
+  // garantindo que o ganho/perda máximo capture os platôs mesmo com strikes longe do spot.
+  const refs = [S];
+  for(const p of positions){
+    if(p.strike > 0) refs.push(p.strike);
+    if(p.tipo === 'ativo' && p.preco > 0) refs.push(p.preco);
+  }
+  let lo = Math.min(S*0.5, ...refs) * 0.85;
+  let hi = Math.max(S*1.5, ...refs) * 1.15;
+  if(lo < 0) lo = 0;
+  if(!(hi > lo)) { lo = 0; hi = (S||50)*2; }
+  const N_PTS = 240;
   const spots = [];
-  for(let i = -0.5; i <= 0.5; i += 0.005) spots.push(+(range*(1+i)).toFixed(4));
+  for(let i = 0; i <= N_PTS; i++) spots.push(+(lo + (hi-lo)*i/N_PTS).toFixed(4));
+  // Inclui os strikes exatos (e o spot) na grade: os vértices do payoff caem nos strikes,
+  // então amostrá-los garante ganho/perda máximo precisos (sem erro de ~R$ entre pontos).
+  for(const p of positions){ if(p.strike > 0) spots.push(p.strike); }
+  // Puts e qualquer posição em ativo têm o extremo de P&L no preço ZERO — amostra sempre.
+  const temPutOuAtivo = positions.some(p => p.tipo === 'put' || p.tipo === 'ativo');
+  if(lo === 0 || temPutOuAtivo) spots.push(0);
+  spots.sort((a,b)=>a-b);
 
   const payoffs = spots.map(s=>calcPayoff(s));
   const maxPnl = Math.max(...payoffs);
   const minPnl = Math.min(...payoffs);
 
-  // Detecta ganho/perda ilimitada pela estrutura real da posição
   // GANHO/PERDA ILIMITADA pela INCLINAÇÃO ASSINTÓTICA do payoff (correto p/ travas,
   // butterflies, condors etc., não só posições simples). slopeUp = inclinação acima de
   // todos os strikes (define a ALTA); slopeDown = inclinação abaixo (define a BAIXA).
+  // IMPORTANTE: na baixa o preço tem PISO em zero, então slopeDown<0 NÃO significa ganho
+  // ilimitado (ex.: put comprada — ganho máx = strike−prêmio). Só a ALTA é ilimitada de fato.
   let slopeUp = 0, slopeDown = 0;
   for(const p of positions){
     const sign = p.op === 'compra' ? 1 : -1;
@@ -1215,8 +1234,11 @@ function updateResults(){
     else if(p.tipo === 'put'){ slopeDown += -sign*p.qtd; }
   }
   const _EPS = 1e-9;
-  const isUnlimitedGain = slopeUp > _EPS || slopeDown < -_EPS;
-  const isUnlimitedLoss = slopeUp < -_EPS || slopeDown > _EPS;
+  // Ganho ilimitado: só pela ALTA (slopeUp>0). A baixa é limitada pelo piso de preço zero.
+  const isUnlimitedGain = slopeUp > _EPS;
+  // Perda ilimitada: pela ALTA (slopeUp<0). Pela baixa, perda é grande mas finita (piso zero),
+  // por isso usa-se minPnl real; mantemos -∞ apenas quando a alta é descoberta.
+  const isUnlimitedLoss = slopeUp < -_EPS;
 
   // Cost (initial debit/credit)
   let cost = 0;
@@ -1276,34 +1298,22 @@ function updateResults(){
       bes.push(strikeCall + totalPremio);  // BE alto
     }
   }
-  // Notional máx = maior exposição nocional da estrutura (strike maior × qtd maior, ou preço do ativo × qtd)
-  // Para spreads: diferença entre strikes × qtd (representa o risco máximo de exercício)
-  // Para posições simples: strike (ou preço) × qtd
-  let notional;
-  const hasOptions = positions.some(p => p.tipo === 'call' || p.tipo === 'put');
-  if(hasOptions){
-    // Detecta spread: há compra e venda de mesma direção (call ou put)
-    const callCompra = positions.filter(p=>p.tipo==='call'&&p.op==='compra');
-    const callVenda  = positions.filter(p=>p.tipo==='call'&&p.op==='venda');
-    const putCompra  = positions.filter(p=>p.tipo==='put'&&p.op==='compra');
-    const putVenda   = positions.filter(p=>p.tipo==='put'&&p.op==='venda');
-    const isSpread = (callCompra.length && callVenda.length) || (putCompra.length && putVenda.length);
-    if(isSpread){
-      // Notional = diferença máxima entre strikes × qtd máx (largura do spread × qtd)
-      const allStrikes = positions.filter(p=>p.strike>0).map(p=>p.strike);
-      const strikeDiff = allStrikes.length >= 2 ? Math.max(...allStrikes) - Math.min(...allStrikes) : 0;
-      const maxQtd2 = Math.max(...positions.map(p=>p.qtd));
-      notional = strikeDiff * maxQtd2;
-    } else {
-      // Posição simples: maior strike ou preço × qtd
-      notional = positions.reduce((s,p)=>{
-        const base = (p.tipo==='call'||p.tipo==='put') ? (p.strike||p.preco) : p.preco;
-        return s + base * p.qtd;
-      }, 0);
-    }
+  // NOTIONAL = CAPITAL MÁXIMO EM RISCO no exercício (lado da perda da estrutura).
+  //  - Perda limitada (travas, condores, comprador puro, put/ativo descoberto com piso 0):
+  //      usa |perda máxima| — quanto a estrutura pode custar no pior exercício.
+  //  - Perda ILIMITADA na alta (call vendida descoberta, ativo vendido a descoberto):
+  //      usa a exposição nocional das pernas vendidas (capital de fato em risco).
+  let notional, notionalDescoberto;
+  if(isUnlimitedLoss){
+    // perda cresce sem teto → reporta exposição das vendas a descoberto
+    notional = positions.filter(p=>p.op==='venda').reduce((s,p)=>{
+      const base = (p.tipo==='call'||p.tipo==='put') ? (p.strike||p.preco) : p.preco;
+      return s + base * p.qtd;
+    }, 0);
+    notionalDescoberto = true;
   } else {
-    // Apenas ativo
-    notional = positions.reduce((s,p)=>s+p.preco*p.qtd, 0);
+    notional = Math.abs(Math.min(0, minPnl));
+    notionalDescoberto = false;
   }
 
   // Margem estimada (B3 usa SPAN; esta é apenas uma estimativa):
@@ -1331,7 +1341,9 @@ function updateResults(){
     return `R$ ${fmt(b)}${pct}`;
   }).join(' / ') : '—';
   document.getElementById('rMargem').textContent = `R$ ${fmt(margem)}`;
-  document.getElementById('rNotional').textContent = `R$ ${fmt(notional)}`;
+  document.getElementById('rNotional').innerHTML = notionalDescoberto
+    ? `R$ ${fmt(notional)} <span style="font-size:0.6rem;color:var(--neg,#ff3d5a);font-family:var(--mono);">descoberto</span>`
+    : `R$ ${fmt(notional)}`;
 
   // Curva "Hoje" (teórica). null em cada ponto se não houver dados → linha some.
   const todayRaw = spots.map(s => calcPayoffToday(s));
@@ -2009,17 +2021,28 @@ function gerarRelatorio(){
   const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
 
   // ── Dados da Operação (reutiliza lógica do updateSummary) ──
-  const range = S > 0 ? S : 50;
+  const _Sref = S || (positions[0] && positions[0].preco) || 50;
+  const _refs = [_Sref];
+  for(const p of positions){
+    if(p.strike > 0) _refs.push(p.strike);
+    if(p.tipo === 'ativo' && p.preco > 0) _refs.push(p.preco);
+  }
+  let _lo = Math.min(_Sref*0.5, ..._refs) * 0.85;
+  let _hi = Math.max(_Sref*1.5, ..._refs) * 1.15;
+  if(_lo < 0) _lo = 0;
+  if(!(_hi > _lo)){ _lo = 0; _hi = _Sref*2; }
   const spots = [];
-  for(let i = -0.5; i <= 0.5; i += 0.005) spots.push(+(range*(1+i)).toFixed(4));
+  for(let i = 0; i <= 240; i++) spots.push(+(_lo + (_hi-_lo)*i/240).toFixed(4));
+  for(const p of positions){ if(p.strike > 0) spots.push(p.strike); }
+  const _temPutAtivo = positions.some(p => p.tipo === 'put' || p.tipo === 'ativo');
+  if(_lo === 0 || _temPutAtivo) spots.push(0);
+  spots.sort((a,b)=>a-b);
   const payoffs = spots.map(s=>calcPayoff(s));
   const maxPnl = Math.max(...payoffs);
   const minPnl = Math.min(...payoffs);
 
-  // Detecta ganho/perda ilimitada pela estrutura real da posição
-  // GANHO/PERDA ILIMITADA pela INCLINAÇÃO ASSINTÓTICA do payoff (correto p/ travas,
-  // butterflies, condors etc., não só posições simples). slopeUp = inclinação acima de
-  // todos os strikes (define a ALTA); slopeDown = inclinação abaixo (define a BAIXA).
+  // GANHO/PERDA ILIMITADA pela inclinação assintótica. Só a ALTA é ilimitada de fato;
+  // a baixa tem piso de preço em zero (perda/ganho grandes mas finitos).
   let slopeUp = 0, slopeDown = 0;
   for(const p of positions){
     const sign = p.op === 'compra' ? 1 : -1;
@@ -2028,8 +2051,8 @@ function gerarRelatorio(){
     else if(p.tipo === 'put'){ slopeDown += -sign*p.qtd; }
   }
   const _EPS = 1e-9;
-  const isUnlimitedGain = slopeUp > _EPS || slopeDown < -_EPS;
-  const isUnlimitedLoss = slopeUp < -_EPS || slopeDown > _EPS;
+  const isUnlimitedGain = slopeUp > _EPS;
+  const isUnlimitedLoss = slopeUp < -_EPS;
   let cost = 0;
   for(const p of positions) cost += (p.op==='compra'?-1:1)*p.preco*p.qtd;
   let bes = [];
@@ -2039,7 +2062,12 @@ function gerarRelatorio(){
       bes.push(sv);
     }
   }
-  const notional = positions.reduce((s,p)=>s+p.preco*p.qtd,0);
+  const notional = isUnlimitedLoss
+    ? positions.filter(p=>p.op==='venda').reduce((s,p)=>{
+        const base = (p.tipo==='call'||p.tipo==='put') ? (p.strike||p.preco) : p.preco;
+        return s + base * p.qtd;
+      }, 0)
+    : Math.abs(Math.min(0, minPnl));
   const hasLongHedgeR = positions.some(p => p.op === 'compra' && (p.tipo === 'call' || p.tipo === 'put' || p.tipo === 'ativo'));
   const margem = hasLongHedgeR && minPnl > -999999
     ? Math.abs(minPnl)
