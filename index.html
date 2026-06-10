@@ -246,11 +246,11 @@ body{padding:12px}
       Cole separadamente para cada ativo (WIN e WDO) se tiver planilhas diferentes.
     </div>
     <div class="modal-tabs">
-      <div class="modal-tab active" data-target="tab-win">Dólar — WIN</div>
-      <div class="modal-tab" data-target="tab-wdo">Índice — WDO</div>
+      <div class="modal-tab active" data-target="tab-win">Índice — WIN</div>
+      <div class="modal-tab" data-target="tab-wdo">Dólar — WDO</div>
     </div>
     <div class="modal-panel active" id="tab-win">
-      <label>Dados do WIN (Dólar)</label>
+      <label>Dados do WIN (Índice)</label>
       <textarea id="paste-win" placeholder="Cole aqui os dados do WIN...
 Exemplo:
 Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
@@ -259,7 +259,7 @@ Goldman	7,55	271993300	7651
 Terra	12,90	-465330904	-13079"></textarea>
     </div>
     <div class="modal-panel" id="tab-wdo">
-      <label>Dados do WDO (Índice)</label>
+      <label>Dados do WDO (Dólar)</label>
       <textarea id="paste-wdo" placeholder="Cole aqui os dados do WDO...
 Exemplo:
 Corretora	%	Vol. Financeiro (R$)	Vol. Qtd
@@ -309,11 +309,11 @@ Terra	12,90	-465330904	-13079"></textarea>
 <!-- ===== DASHBOARD ===== -->
 <div class="dash">
 
-  <!-- DÓLAR / WIN -->
+  <!-- ÍNDICE / WIN -->
   <div class="panel" id="panel-win">
     <div class="panel-header">
       <div class="panel-title">
-        <div class="title-left"><span class="cy" style="font-size:15px">▪</span> DÓLAR</div>
+        <div class="title-left"><span class="cy" style="font-size:15px">▪</span> ÍNDICE</div>
         <div class="price-block">
           <div class="price-main cy" id="win-price">—</div>
           <div class="price-sub cm" id="win-sub"><span class="import-link" onclick="openModal('win')">Clique para importar dados</span></div>
@@ -363,11 +363,11 @@ Terra	12,90	-465330904	-13079"></textarea>
     </div>
   </div>
 
-  <!-- ÍNDICE / WDO -->
+  <!-- DÓLAR / WDO -->
   <div class="panel" id="panel-wdo">
     <div class="panel-header">
       <div class="panel-title">
-        <div class="title-left"><span class="cg" style="font-size:15px">▪</span> ÍNDICE</div>
+        <div class="title-left"><span class="cg" style="font-size:15px">▪</span> DÓLAR</div>
         <div class="price-block">
           <div class="price-main cg" id="wdo-price">—</div>
           <div class="price-sub cm" id="wdo-sub"><span class="import-link" onclick="openModal('wdo')">Clique para importar dados</span></div>
@@ -436,17 +436,17 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="weekly-grid">
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">💵 Dólar</span>
+          <span class="wcap">📈 Índice</span>
           <button class="btn btn-mini" id="btn-undo-win" title="Remove a última importação registrada no WIN">↶ Desfazer último</button>
-          <button class="btn btn-mini" id="btn-clearweek-win" title="Apaga a semana só do Dólar">🗑 Limpar Dólar</button>
+          <button class="btn btn-mini" id="btn-clearweek-win" title="Apaga a semana só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="weekly-body-win"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">📈 Índice</span>
+          <span class="wcap">💵 Dólar</span>
           <button class="btn btn-mini" id="btn-undo-wdo" title="Remove a última importação registrada no WDO">↶ Desfazer último</button>
-          <button class="btn btn-mini" id="btn-clearweek-wdo" title="Apaga a semana só do Índice">🗑 Limpar Índice</button>
+          <button class="btn btn-mini" id="btn-clearweek-wdo" title="Apaga a semana só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="weekly-body-wdo"></div>
       </div>
@@ -472,15 +472,15 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="weekly-grid">
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">💵 Dólar</span>
-          <button class="btn btn-mini" id="btn-clearmonth-win" title="Apaga o mensal só do Dólar">🗑 Limpar Dólar</button>
+          <span class="wcap">📈 Índice</span>
+          <button class="btn btn-mini" id="btn-clearmonth-win" title="Apaga o mensal só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="month-body-win"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">📈 Índice</span>
-          <button class="btn btn-mini" id="btn-clearmonth-wdo" title="Apaga o mensal só do Índice">🗑 Limpar Índice</button>
+          <span class="wcap">💵 Dólar</span>
+          <button class="btn btn-mini" id="btn-clearmonth-wdo" title="Apaga o mensal só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="month-body-wdo"></div>
       </div>
@@ -501,15 +501,15 @@ Terra	12,90	-465330904	-13079"></textarea>
     <div class="weekly-grid">
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">💵 Dólar</span>
-          <button class="btn btn-mini" id="btn-clearyear-win" title="Apaga o anual só do Dólar">🗑 Limpar Dólar</button>
+          <span class="wcap">📈 Índice</span>
+          <button class="btn btn-mini" id="btn-clearyear-win" title="Apaga o anual só do Índice">🗑 Limpar Índice</button>
         </div>
         <div id="year-body-win"></div>
       </div>
       <div class="weekly-col">
         <div class="weekly-col-head">
-          <span class="wcap">📈 Índice</span>
-          <button class="btn btn-mini" id="btn-clearyear-wdo" title="Apaga o anual só do Índice">🗑 Limpar Índice</button>
+          <span class="wcap">💵 Dólar</span>
+          <button class="btn btn-mini" id="btn-clearyear-wdo" title="Apaga o anual só do Dólar">🗑 Limpar Dólar</button>
         </div>
         <div id="year-body-wdo"></div>
       </div>
@@ -590,13 +590,13 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
   const diaNome = (typeof DAY_NAMES!=='undefined' && DAY_NAMES[dayKey]) || dayKey;
   if(rawWin){
     const n = jaTemDados('win');
-    if(n>0 && !confirm('O Dólar já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
+    if(n>0 && !confirm('O Índice já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
       return; // cancela tudo
     }
   }
   if(rawWdo){
     const n = jaTemDados('wdo');
-    if(n>0 && !confirm('O Índice já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
+    if(n>0 && !confirm('O Dólar já tem '+n+' importação(ões) em '+diaNome+'.\n\nImportar de novo vai SOMAR a esses dados. Deseja continuar?')){
       return; // cancela tudo
     }
   }
@@ -611,6 +611,11 @@ document.getElementById('btn-apply').addEventListener('click',()=>{
   }
 
   if(errMsg){ errEl.textContent = errMsg; return; }
+  // Limpa os campos após importar, senão o texto antigo continua nos
+  // textareas e é reimportado na próxima vez (causava duplicação do Dólar
+  // ao adicionar apenas o Índice).
+  document.getElementById('paste-win').value = '';
+  document.getElementById('paste-wdo').value = '';
   overlay.classList.remove('open');
 });
 
@@ -1058,7 +1063,7 @@ function buildReportHTML(){
   const quando = now.toLocaleString('pt-BR');
   const sec = (titulo, conteudo) => `<h2>${esc(titulo)}</h2>${conteudo}`;
 
-  const assets = [['win','Dólar'],['wdo','Índice']];
+  const assets = [['win','Índice'],['wdo','Dólar']];
 
   // 1) Dia exibido
   let diaSec='';
@@ -1289,7 +1294,7 @@ document.getElementById('btn-clear-week').addEventListener('click', ()=>{
   }
 });
 
-// Limpa a SEMANA de um único ativo (win=Dólar, wdo=Índice).
+// Limpa a SEMANA de um único ativo (win=Índice, wdo=Dólar).
 function clearWeekAsset(asset, nome){
   if(confirm('Limpar a SEMANA só do '+nome+'?\n\nO outro ativo não será afetado.')){
     weekState[asset] = {};
@@ -1298,8 +1303,8 @@ function clearWeekAsset(asset, nome){
     renderWeekly();
   }
 }
-document.getElementById('btn-clearweek-win').addEventListener('click', ()=>clearWeekAsset('win','Dólar'));
-document.getElementById('btn-clearweek-wdo').addEventListener('click', ()=>clearWeekAsset('wdo','Índice'));
+document.getElementById('btn-clearweek-win').addEventListener('click', ()=>clearWeekAsset('win','Índice'));
+document.getElementById('btn-clearweek-wdo').addEventListener('click', ()=>clearWeekAsset('wdo','Dólar'));
 
 // ─── FLUXO MENSAL / ANUAL ─────────────────────────────────────────────────────
 const PERIOD_KEY = 'fluxo_periodo_v1';
@@ -1461,10 +1466,10 @@ function clearPeriodAsset(asset, scope, nome){
     savePeriod(); renderPeriod();
   }
 }
-document.getElementById('btn-clearmonth-win').addEventListener('click', ()=>clearPeriodAsset('win','months','Dólar'));
-document.getElementById('btn-clearmonth-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','months','Índice'));
-document.getElementById('btn-clearyear-win').addEventListener('click', ()=>clearPeriodAsset('win','years','Dólar'));
-document.getElementById('btn-clearyear-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','years','Índice'));
+document.getElementById('btn-clearmonth-win').addEventListener('click', ()=>clearPeriodAsset('win','months','Índice'));
+document.getElementById('btn-clearmonth-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','months','Dólar'));
+document.getElementById('btn-clearyear-win').addEventListener('click', ()=>clearPeriodAsset('win','years','Índice'));
+document.getElementById('btn-clearyear-wdo').addEventListener('click', ()=>clearPeriodAsset('wdo','years','Dólar'));
 
 renderWeekly();
 renderPeriod();
