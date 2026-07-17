@@ -100,6 +100,7 @@ body{padding:12px}
 .panel-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-top:6px}
 .stat-box{background:var(--bg3);border-radius:4px;padding:5px 8px}
 .stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.stat-label-tip{border-bottom:1px dotted var(--text3);cursor:help}
 .stat-value{font-size:11px;font-weight:700;margin-top:2px}
 
 /* Abas de dia (Seg–Sex) por painel */
@@ -320,8 +321,8 @@ Terra	12,90	-465330904	-13079"></textarea>
         </div>
       </div>
       <div class="panel-stats">
-        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="win-s-buy">—</div></div>
-        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="win-s-sell">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cg" id="win-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia vendido (não é volume bruto negociado). Tende a espelhar o Fluxo Comprador, pois todo vendido tem um comprado do outro lado.">Fluxo Vendedor</div><div class="stat-value cr" id="win-s-sell">—</div></div>
         <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="win-s-net">—</div></div>
       </div>
     </div>
@@ -374,8 +375,8 @@ Terra	12,90	-465330904	-13079"></textarea>
         </div>
       </div>
       <div class="panel-stats">
-        <div class="stat-box"><div class="stat-label">Compras</div><div class="stat-value cg" id="wdo-s-buy">—</div></div>
-        <div class="stat-box"><div class="stat-label">Vendas</div><div class="stat-value cr" id="wdo-s-sell">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cg" id="wdo-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia vendido (não é volume bruto negociado). Tende a espelhar o Fluxo Comprador, pois todo vendido tem um comprado do outro lado.">Fluxo Vendedor</div><div class="stat-value cr" id="wdo-s-sell">—</div></div>
         <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="wdo-s-net">—</div></div>
       </div>
     </div>
