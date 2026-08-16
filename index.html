@@ -18,7 +18,7 @@
   --tbl-row-border:#e3e8ef;
   --btn-blue-bg:#ddeaff;--btn-blue-hover:#c5dcff;
   --btn-gold-bg:#fdf0d5;--btn-gold-hover:#fbe4b0;
-  --b-buy-bg:#e6f6ec;--b-buy-bd:#a9d9bb;
+  --b-buy-bg:#ddeaff;--b-buy-bd:#a9c9f0;
   --b-sell-bg:#fde8ea;--b-sell-bd:#f0b3b9;
   --b-neu-bg:#eef1f6;--b-neu-bd:#d4dae3;
   --wtotal-bg:rgba(9,105,218,.06);
@@ -37,7 +37,7 @@
   --tbl-row-border:#1c2128;
   --btn-blue-bg:#0d2a45;--btn-blue-hover:#1a3d5c;
   --btn-gold-bg:#3a2c0d;--btn-gold-hover:#4d3b12;
-  --b-buy-bg:#0d3b2a;--b-buy-bd:#1a5c3a;
+  --b-buy-bg:#0d2a45;--b-buy-bd:#1a4a6c;
   --b-sell-bg:#3d1515;--b-sell-bd:#5c2020;
   --b-neu-bg:#1c2128;--b-neu-bd:#30363d;
   --wtotal-bg:rgba(88,166,255,.05);
@@ -134,7 +134,7 @@ body{padding:12px}
 .tbl tbody tr:hover{background:var(--bg3)}
 
 .badge{font-size:8px;padding:2px 6px;border-radius:2px;font-weight:700;letter-spacing:.3px;white-space:nowrap}
-.b-buy{background:var(--b-buy-bg);color:var(--green);border:1px solid var(--b-buy-bd)}
+.b-buy{background:var(--b-buy-bg);color:var(--blue);border:1px solid var(--b-buy-bd)}
 .b-sell{background:var(--b-sell-bg);color:var(--red);border:1px solid var(--b-sell-bd)}
 .b-neu{background:var(--b-neu-bg);color:var(--text2);border:1px solid var(--b-neu-bd)}
 
@@ -143,7 +143,7 @@ body{padding:12px}
 .vol-lbl{font-size:9px;width:80px;flex-shrink:0}
 .vol-bar-bg{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
 .vol-bar{height:100%;border-radius:3px;transition:width .4s}
-.vol-bar.g{background:var(--green)}.vol-bar.r{background:var(--red)}
+.vol-bar.g{background:var(--blue)}.vol-bar.r{background:var(--red)}
 .vol-val{font-size:9px;min-width:65px;text-align:right;font-variant-numeric:tabular-nums}
 
 .tab-row{display:flex;padding:0 12px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
@@ -156,9 +156,9 @@ body{padding:12px}
 .br-col{background:var(--bg2);min-width:0}
 .br-col-head{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:6px 12px 4px}
 .br-col-head .dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
-.br-col.buy .br-col-head{color:var(--green)}
+.br-col.buy .br-col-head{color:var(--blue)}
 .br-col.sell .br-col-head{color:var(--red)}
-.br-col.buy .dot{background:var(--green)}
+.br-col.buy .dot{background:var(--blue)}
 .br-col.sell .dot{background:var(--red)}
 @media(max-width:480px){.br-cols{grid-template-columns:1fr}}
 
@@ -366,7 +366,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         </div>
       </div>
       <div class="panel-stats">
-        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cg" id="win-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cbl" id="win-s-buy">—</div></div>
         <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia vendido (não é volume bruto negociado). Tende a espelhar o Fluxo Comprador, pois todo vendido tem um comprado do outro lado.">Fluxo Vendedor</div><div class="stat-value cr" id="win-s-sell">—</div></div>
         <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="win-s-net">—</div></div>
       </div>
@@ -420,7 +420,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         </div>
       </div>
       <div class="panel-stats">
-        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cg" id="wdo-s-buy">—</div></div>
+        <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia comprado (não é volume bruto negociado). Tende a espelhar o Fluxo Vendedor, pois todo comprado tem um vendido do outro lado.">Fluxo Comprador</div><div class="stat-value cbl" id="wdo-s-buy">—</div></div>
         <div class="stat-box"><div class="stat-label stat-label-tip" title="Soma do saldo líquido de quem terminou o dia vendido (não é volume bruto negociado). Tende a espelhar o Fluxo Comprador, pois todo vendido tem um comprado do outro lado.">Fluxo Vendedor</div><div class="stat-value cr" id="wdo-s-sell">—</div></div>
         <div class="stat-box"><div class="stat-label">Saldo Líq.</div><div class="stat-value" id="wdo-s-net">—</div></div>
       </div>
@@ -780,7 +780,7 @@ function fmtSaldo(v){
   const a = Math.round(Math.abs(v));
   return s + 'R$ ' + a.toLocaleString('pt-BR');
 }
-function cc(v){ return v>0?'cg':v<0?'cr':'cm'; }
+function cc(v){ return v>0?'cbl':v<0?'cr':'cm'; }
 function badge(v){ return v>0?'<span class="badge b-buy">COMPRADO</span>':v<0?'<span class="badge b-sell">VENDIDO</span>':'<span class="badge b-neu">NEUTRO</span>'; }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -789,7 +789,7 @@ function renderParts(id, groups){
   let h=`<table class="tbl"><thead><tr><th>Participante</th><th class="r">Compra</th><th class="r">Venda</th><th class="r">Saldo</th><th class="r">Pos.</th></tr></thead><tbody>`;
   for(const k of order){
     const g=groups[k];
-    h+=`<tr><td>${GROUP_META[k].label}</td><td class="r ${g.buy>0?'cg':''}">${g.buy?fmtV(g.buy):'0'}</td><td class="r ${g.sell<0?'cr':''}">${g.sell?fmtV(g.sell):'0'}</td><td class="r ${cc(g.net)}">${fmtV(g.net)}</td><td class="r">${badge(g.net)}</td></tr>`;
+    h+=`<tr><td>${GROUP_META[k].label}</td><td class="r ${g.buy>0?'cbl':''}">${g.buy?fmtV(g.buy):'0'}</td><td class="r ${g.sell<0?'cr':''}">${g.sell?fmtV(g.sell):'0'}</td><td class="r ${cc(g.net)}">${fmtV(g.net)}</td><td class="r">${badge(g.net)}</td></tr>`;
   }
   document.getElementById(id).innerHTML=h+'</tbody></table>';
 }
@@ -811,7 +811,7 @@ function renderBrokers(buyId, sellId, rows){
   function tbl(list, isBuy){
     if(!list.length) return '<div class="empty" style="padding:10px"><span>Sem dados</span></div>';
     let h=`<table class="tbl"><thead><tr><th>Corretora</th><th class="r">%</th><th class="r">Vol. Fin. (M)</th></tr></thead><tbody>`;
-    for(const r of list) h+=`<tr><td>${r.name}</td><td class="r">${r.pct.toFixed(2)}%</td><td class="r ${isBuy?'cg':'cr'}">${fmtM(r.vol)}</td></tr>`;
+    for(const r of list) h+=`<tr><td>${r.name}</td><td class="r">${r.pct.toFixed(2)}%</td><td class="r ${isBuy?'cbl':'cr'}">${fmtM(r.vol)}</td></tr>`;
     return h+'</tbody></table>';
   }
   document.getElementById(buyId).innerHTML  = tbl(buying, true);
@@ -918,7 +918,7 @@ function renderQtyChart(id, groups){
   const ORDER=['EXT','INST','PF','OUT'];
   const labels = ORDER.map(k=>GROUP_LABELS[k]);
   const data   = ORDER.map(k=>groups[k].qtyNet||0);
-  const colors = data.map(v=> v>=0 ? cv('--green') || '#3fb950' : cv('--red') || '#f85149');
+  const colors = data.map(v=> v>=0 ? cv('--blue') || '#58a6ff' : cv('--red') || '#f85149');
 
   charts[id] = new Chart(el,{
     type:'bar',
@@ -1051,7 +1051,7 @@ function resetPanelDom(p){
   set(p+'-br-buy', emptyBr);
   set(p+'-br-sell', emptyBr);
   ['-s-buy','-s-sell','-s-net'].forEach(s=>{
-    const el=document.getElementById(p+s); if(el){ el.textContent='—'; el.className='stat-value'+(s==='-s-buy'?' cg':s==='-s-sell'?' cr':''); }
+    const el=document.getElementById(p+s); if(el){ el.textContent='—'; el.className='stat-value'+(s==='-s-buy'?' cbl':s==='-s-sell'?' cr':''); }
   });
   const sub=document.getElementById(p+'-sub');
   if(sub){ sub.className='price-sub cm'; sub.innerHTML='<span class="import-link" onclick="openModal(\''+p+'\')">Clique para importar dados</span>'; }
@@ -1936,7 +1936,7 @@ function b3RenderEstrangeiroChart(estMonths){
   const v = b3CssVars();
   const labels = rows.map(r=>b3Label(r[0]));
   const data = rows.map(r=>b3Num(r[4]));
-  const colors = data.map(x=> x>=0 ? v.green : v.red);
+  const colors = data.map(x=> x>=0 ? v.blue : v.red);
   b3Charts.estrangeiro = new Chart(el,{
     type:'bar',
     data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, borderRadius:3, maxBarThickness:28 }] },
@@ -1986,7 +1986,7 @@ function renderB3(data){
   h += '<div class="b3-stat"><div class="b3-stat-label">Último mês — '+(volLast?esc(b3Label(volLast[0])):'—')+'</div><div class="b3-stat-value">'+(volLast?b3fmtMoneyMM(b3Num(volLast[5])):'—')+'</div><div class="b3-stat-sub">Volume negociado no mês</div></div>';
   h += '<div class="b3-stat"><div class="b3-stat-label">Nº Negócios '+(negAgg?esc(b3Label(negAgg[0])):'—')+'</div><div class="b3-stat-value">'+(negAgg?b3fmtInt(b3Num(negAgg[5])):'—')+'</div><div class="b3-stat-sub">Total de negócios registrados</div></div>';
   const estVal = estAgg?b3Num(estAgg[4]):NaN;
-  h += '<div class="b3-stat"><div class="b3-stat-label">Saldo Estrangeiro '+(estAgg?esc(b3Label(estAgg[0])):'—')+'</div><div class="b3-stat-value '+(isNaN(estVal)?'':(estVal>=0?'cg':'cr'))+'">'+(estAgg?b3fmtMoneyMM(estVal):'—')+'</div><div class="b3-stat-sub">Compras − Vendas + IPO/Follow-on</div></div>';
+  h += '<div class="b3-stat"><div class="b3-stat-label">Saldo Estrangeiro '+(estAgg?esc(b3Label(estAgg[0])):'—')+'</div><div class="b3-stat-value '+(isNaN(estVal)?'':(estVal>=0?'cbl':'cr'))+'">'+(estAgg?b3fmtMoneyMM(estVal):'—')+'</div><div class="b3-stat-sub">Compras − Vendas + IPO/Follow-on</div></div>';
   h += '</div>';
 
   // ── volume negociado ──
