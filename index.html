@@ -236,26 +236,49 @@ body{padding:12px}
   .price-main{font-size:13px}
 }
 
-/* ===== DADOS DE MERCADO B3 ===== */
-.b3-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px 2px}
-.b3-stat{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:9px 12px}
+/* ===== DADOS DE MERCADO B3 (dashboard) ===== */
+.b3-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px}
+.b3-stat{position:relative;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:12px 13px 11px;overflow:hidden;transition:border-color .15s,transform .15s}
+.b3-stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent,var(--blue))}
+.b3-stat:hover{border-color:var(--accent,var(--blue));transform:translateY(-1px)}
+.b3-stat-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.b3-stat-icon{font-size:12px;line-height:1}
 .b3-stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-.b3-stat-value{font-size:14px;font-weight:700;margin-top:3px}
-.b3-stat-sub{font-size:9px;color:var(--text3);margin-top:2px}
-.b3-block{border-top:1px solid var(--border);padding-top:2px;margin-top:6px}
-.b3-block:first-of-type{border-top:none;margin-top:0}
-.b3-block-title{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 4px;flex-wrap:wrap;gap:4px}
-.b3-block-title h3{font-size:11px;font-weight:700;letter-spacing:.3px}
-.b3-block-note{font-size:9px;color:var(--text3)}
-.b3-chart-wrap{height:190px;padding:4px 14px 16px}
+.b3-stat-value{font-size:17px;font-weight:700;margin-top:4px;letter-spacing:-.2px}
+.b3-stat-sub{font-size:9px;color:var(--text3);margin-top:3px}
+
+/* grade de painéis (mesmo espírito do .dash do Fluxo Financeiro) */
+.b3-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:1840px;margin:10px auto 0}
+.b3-panel{background:var(--bg2);border:1px solid var(--border);border-radius:8px;overflow:hidden;
+  box-shadow:var(--shadow);transition:border-color .2s}
+.b3-panel:hover{border-color:#3a414d}
+.b3-panel.full{grid-column:1/-1}
+.b3-panel-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  padding:10px 14px;border-bottom:1px solid var(--border)}
+.b3-panel-head h3{font-size:11.5px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:7px}
+.b3-panel-head .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--accent,var(--blue))}
+.b3-panel-note{font-size:9px;color:var(--text3)}
+.b3-chart-wrap{height:190px;padding:10px 14px 4px}
 .b3-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0 14px 8px}
 .b3-legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
 .b3-legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .b3-src{font-size:9px;color:var(--text3);line-height:1.7;padding:2px 14px}
 .b3-src a{color:var(--blue);text-decoration:none}
 .b3-src a:hover{text-decoration:underline}
+
+/* accordion "anos anteriores" */
+.b3-years{border-top:1px solid var(--border)}
+.b3-years summary{cursor:pointer;padding:8px 14px;font-size:9px;color:var(--text2);text-transform:uppercase;
+  letter-spacing:.5px;list-style:none;display:flex;align-items:center;gap:6px;user-select:none;transition:color .15s}
+.b3-years summary::-webkit-details-marker{display:none}
+.b3-years summary::before{content:'▸';display:inline-block;transition:transform .15s;color:var(--text3)}
+.b3-years[open] summary::before{transform:rotate(90deg)}
+.b3-years summary:hover{color:var(--text)}
+
+@media(max-width:1100px){.b3-grid{grid-template-columns:1fr}.b3-panel.full{grid-column:auto}}
 @media(max-width:760px){.b3-stats{grid-template-columns:1fr 1fr}}
-@media(max-width:420px){.b3-stats{grid-template-columns:1fr}}
+@media(max-width:420px){.b3-stats{grid-template-columns:1fr}.b3-stat-value{font-size:15px}}
 </style>
 <script>
 // Aplica o tema salvo o quanto antes (evita "piscar"). Padrão: claro.
@@ -572,7 +595,7 @@ Terra	12,90	-465330904	-13079"></textarea>
 <!-- ===== DADOS DE MERCADO B3 ===== -->
 <div id="view-b3" style="display:none">
 <div class="weekly" id="b3-wrap">
-  <div class="weekly-panel">
+  <div class="weekly-panel" id="b3-hero">
     <div class="weekly-head">
       <div>
         <div class="wtitle"><span style="color:var(--blue)">📊</span> Dados de Mercado B3 — Visão Geral</div>
@@ -582,7 +605,7 @@ Terra	12,90	-465330904	-13079"></textarea>
         <button class="btn btn-mini" id="btn-clear-b3" title="Remove os dados de mercado B3 importados">🗑 Limpar dados B3</button>
       </div>
     </div>
-    <div id="b3-body">
+    <div id="b3-stats-wrap">
       <div class="weekly-empty">
         <strong>Sem dados de mercado</strong>
         Clique em "⬆ Importar CSV da B3" no topo da página e selecione o arquivo .csv baixado em
@@ -598,6 +621,7 @@ Terra	12,90	-465330904	-13079"></textarea>
       <span id="b3-updated">—</span>
     </div>
   </div>
+  <div class="b3-grid" id="b3-body"></div>
 </div>
 </div><!-- /view-b3 -->
 
@@ -1837,6 +1861,13 @@ function b3BuildTable(rows, colDefs){
   return h;
 }
 
+// envolve a tabela "anos anteriores" num <details> recolhível
+function b3YearsBlock(rows, colDefs, label){
+  const tbl = b3BuildTable(rows, colDefs);
+  if(!tbl) return '';
+  return '<details class="b3-years"><summary>'+esc(label||'Ver anos anteriores')+'</summary>'+tbl+'</details>';
+}
+
 function b3LastRealRow(tbl){
   if(!tbl || !tbl.rows) return null;
   const reais = tbl.rows.filter(r=>!b3IsAgg(r[0]));
@@ -1960,11 +1991,13 @@ function b3RenderEstrangeiroChart(estMonths){
 
 // ── render principal ─────────────────────────────────────────────────────
 function renderB3(data){
+  const statsWrap = document.getElementById('b3-stats-wrap');
   const body = document.getElementById('b3-body');
   const sub  = document.getElementById('b3-sub');
   const upd  = document.getElementById('b3-updated');
   if(!data){
-    body.innerHTML = '<div class="weekly-empty"><strong>Sem dados de mercado</strong>Clique em "📊 Importar Dados de Mercado B3" no topo da página e selecione o arquivo .csv baixado da B3.</div>';
+    statsWrap.innerHTML = '<div class="weekly-empty"><strong>Sem dados de mercado</strong>Clique em "📊 Importar Dados de Mercado B3" no topo da página e selecione o arquivo .csv baixado da B3.</div>';
+    body.innerHTML = '';
     sub.textContent = 'Nenhum relatório importado ainda';
     upd.textContent = '—';
     return;
@@ -1978,73 +2011,75 @@ function renderB3(data){
   sub.textContent = volAgg ? ('Acumulado '+b3Label(volAgg[0])+' — atualizado a cada importação') : 'Relatório importado';
   upd.textContent = 'Importado em: ' + new Date(data.importedAt).toLocaleString('pt-BR');
 
+  // ── cards de resumo ──
+  let s = '<div class="b3-stats">';
+  s += '<div class="b3-stat" style="--accent:var(--blue)"><div class="b3-stat-top"><span class="b3-stat-icon">💰</span><span class="b3-stat-label">Volume Total '+(volAgg?esc(b3Label(volAgg[0])):'—')+'</span></div><div class="b3-stat-value">'+(volAgg?b3fmtMoneyMM(b3Num(volAgg[5])):'—')+'</div><div class="b3-stat-sub">À vista + Termo + Opções + Bloco</div></div>';
+  s += '<div class="b3-stat" style="--accent:var(--blue)"><div class="b3-stat-top"><span class="b3-stat-icon">📅</span><span class="b3-stat-label">Último mês — '+(volLast?esc(b3Label(volLast[0])):'—')+'</span></div><div class="b3-stat-value">'+(volLast?b3fmtMoneyMM(b3Num(volLast[5])):'—')+'</div><div class="b3-stat-sub">Volume negociado no mês</div></div>';
+  s += '<div class="b3-stat" style="--accent:var(--purple)"><div class="b3-stat-top"><span class="b3-stat-icon">🔁</span><span class="b3-stat-label">Nº Negócios '+(negAgg?esc(b3Label(negAgg[0])):'—')+'</span></div><div class="b3-stat-value">'+(negAgg?b3fmtInt(b3Num(negAgg[5])):'—')+'</div><div class="b3-stat-sub">Total de negócios registrados</div></div>';
+  const estVal = estAgg?b3Num(estAgg[4]):NaN;
+  s += '<div class="b3-stat" style="--accent:var(--yellow)"><div class="b3-stat-top"><span class="b3-stat-icon">🌎</span><span class="b3-stat-label">Saldo Estrangeiro '+(estAgg?esc(b3Label(estAgg[0])):'—')+'</span></div><div class="b3-stat-value '+(isNaN(estVal)?'':(estVal>=0?'cbl':'cr'))+'">'+(estAgg?b3fmtMoneyMM(estVal):'—')+'</div><div class="b3-stat-sub">Compras − Vendas + IPO/Follow-on</div></div>';
+  s += '</div>';
+  statsWrap.innerHTML = s;
+
   let h = '';
 
-  // ── cards de resumo ──
-  h += '<div class="b3-stats">';
-  h += '<div class="b3-stat"><div class="b3-stat-label">Volume Total '+(volAgg?esc(b3Label(volAgg[0])):'—')+'</div><div class="b3-stat-value">'+(volAgg?b3fmtMoneyMM(b3Num(volAgg[5])):'—')+'</div><div class="b3-stat-sub">À vista + Termo + Opções + Bloco</div></div>';
-  h += '<div class="b3-stat"><div class="b3-stat-label">Último mês — '+(volLast?esc(b3Label(volLast[0])):'—')+'</div><div class="b3-stat-value">'+(volLast?b3fmtMoneyMM(b3Num(volLast[5])):'—')+'</div><div class="b3-stat-sub">Volume negociado no mês</div></div>';
-  h += '<div class="b3-stat"><div class="b3-stat-label">Nº Negócios '+(negAgg?esc(b3Label(negAgg[0])):'—')+'</div><div class="b3-stat-value">'+(negAgg?b3fmtInt(b3Num(negAgg[5])):'—')+'</div><div class="b3-stat-sub">Total de negócios registrados</div></div>';
-  const estVal = estAgg?b3Num(estAgg[4]):NaN;
-  h += '<div class="b3-stat"><div class="b3-stat-label">Saldo Estrangeiro '+(estAgg?esc(b3Label(estAgg[0])):'—')+'</div><div class="b3-stat-value '+(isNaN(estVal)?'':(estVal>=0?'cbl':'cr'))+'">'+(estAgg?b3fmtMoneyMM(estVal):'—')+'</div><div class="b3-stat-sub">Compras − Vendas + IPO/Follow-on</div></div>';
-  h += '</div>';
-
-  // ── volume negociado ──
+  // ── volume negociado (painel cheio, com gráfico) ──
   if(data.volume && (data.volume.months || data.volume.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Volume Negociado — Mensal (R$)</h3><span class="b3-block-note">À vista · Termo · Opções · Bloco · Total</span></div>';
+    h += '<div class="b3-panel full" style="--accent:var(--blue)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Volume Negociado — Mensal (R$)</h3><span class="b3-panel-note">À vista · Termo · Opções · Bloco · Total</span></div>';
     h += '<div class="b3-chart-wrap"><canvas id="b3-chart-volume"></canvas></div>';
     h += b3BuildTable(data.volume.months?data.volume.months.rows:[], [
       {label:'À Vista',type:'money'},{label:'Termo',type:'money'},{label:'Opções',type:'money'},{label:'Em Bloco',type:'money'},{label:'Total',type:'money'}
     ]);
-    h += '<div class="b3-block-title"><h3>Volume Negociado — Anos Anteriores (R$)</h3></div>';
-    h += b3BuildTable(data.volume.years?data.volume.years.rows:[], [
+    h += b3YearsBlock(data.volume.years?data.volume.years.rows:[], [
       {label:'À Vista',type:'money'},{label:'Termo',type:'money'},{label:'Opções',type:'money'},{label:'Em Bloco',type:'money'},{label:'Total',type:'money'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
-  // ── volume médio diário ──
+  // ── volume médio diário (painel compacto, metade) ──
   if(data.volumeMedio && (data.volumeMedio.months || data.volumeMedio.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Volume Médio Diário</h3><span class="b3-block-note">R$ e US$ milhões, com variação % sobre o mês anterior</span></div>';
+    h += '<div class="b3-panel" style="--accent:var(--blue)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Volume Médio Diário</h3><span class="b3-panel-note">R$/US$ MM · var. % s/ mês ant.</span></div>';
     h += b3BuildTable(data.volumeMedio.months?data.volumeMedio.months.rows:[], [
       {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
     ]);
-    h += '<div class="b3-block-title"><h3>Volume Médio Diário — Anos Anteriores</h3></div>';
-    h += b3BuildTable(data.volumeMedio.years?data.volumeMedio.years.rows:[], [
+    h += b3YearsBlock(data.volumeMedio.years?data.volumeMedio.years.rows:[], [
       {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
-  // ── número de negócios ──
+  // ── número de negócios (painel compacto, metade) ──
   if(data.negocios && (data.negocios.months || data.negocios.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Número de Negócios — Mensal</h3><span class="b3-block-note">À vista · Termo · Opções · Bloco · Total</span></div>';
+    h += '<div class="b3-panel" style="--accent:var(--purple)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Número de Negócios — Mensal</h3><span class="b3-panel-note">À vista · Termo · Opções · Bloco</span></div>';
     h += b3BuildTable(data.negocios.months?data.negocios.months.rows:[], [
       {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
     ]);
-    h += '<div class="b3-block-title"><h3>Número de Negócios — Anos Anteriores</h3></div>';
-    h += b3BuildTable(data.negocios.years?data.negocios.years.rows:[], [
+    h += b3YearsBlock(data.negocios.years?data.negocios.years.rows:[], [
       {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
-  // ── número de negócios médio diário ──
+  // ── número de negócios médio diário (painel compacto, metade) ──
   if(data.negociosMedio && (data.negociosMedio.months || data.negociosMedio.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Número de Negócios — Média Diária</h3></div>';
+    h += '<div class="b3-panel" style="--accent:var(--purple)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Negócios — Média Diária</h3></div>';
     h += b3BuildTable(data.negociosMedio.months?data.negociosMedio.months.rows:[], [
       {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
     ]);
-    h += '<div class="b3-block-title"><h3>Média Diária — Anos Anteriores</h3></div>';
-    h += b3BuildTable(data.negociosMedio.years?data.negociosMedio.years.rows:[], [
+    h += b3YearsBlock(data.negociosMedio.years?data.negociosMedio.years.rows:[], [
       {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
-  // ── participação por tipo de investidor ──
+  // ── participação por tipo de investidor (painel cheio, com gráfico) ──
   if(data.participacao && (data.participacao.months || data.participacao.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Participação por Tipo de Investidor (%) — Mensal</h3></div>';
+    h += '<div class="b3-panel" style="--accent:var(--green)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Participação por Tipo de Investidor (%) — Mensal</h3></div>';
     h += '<div class="b3-legend">'+
       '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--green)"></span>Pessoas Físicas</div>'+
       '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--purple)"></span>Institucionais</div>'+
@@ -2056,24 +2091,23 @@ function renderB3(data){
     h += b3BuildTable(data.participacao.months?data.participacao.months.rows:[], [
       {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
     ]);
-    h += '<div class="b3-block-title"><h3>Participação — Anos Anteriores</h3></div>';
-    h += b3BuildTable(data.participacao.years?data.participacao.years.rows:[], [
+    h += b3YearsBlock(data.participacao.years?data.participacao.years.rows:[], [
       {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
-  // ── movimentação de investidores estrangeiros ──
+  // ── movimentação de investidores estrangeiros (painel cheio, com gráfico) ──
   if(data.estrangeiro && (data.estrangeiro.months || data.estrangeiro.years)){
-    h += '<div class="b3-block"><div class="b3-block-title"><h3>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-block-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
+    h += '<div class="b3-panel full" style="--accent:var(--yellow)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-panel-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
     h += '<div class="b3-chart-wrap"><canvas id="b3-chart-estrangeiro"></canvas></div>';
     h += b3BuildTable(data.estrangeiro.months?data.estrangeiro.months.rows:[], [
       {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
     ]);
-    h += '<div class="b3-block-title"><h3>Movimentação — Anos Anteriores</h3></div>';
-    h += b3BuildTable(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
+    h += b3YearsBlock(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
       {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
-    ]);
+    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
