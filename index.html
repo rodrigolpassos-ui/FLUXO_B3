@@ -1770,17 +1770,21 @@ function parseB3Report(text){
 function b3fmtMoneyMM(vMillions, cur){
   cur = cur || 'R$';
   if(isNaN(vMillions)) return '—';
-  const sign = vMillions<0 ? '-' : '';
+  const neg = vMillions<0;
+  const sign = neg ? '-' : '';
   const a = Math.abs(vMillions);
   let val, suf;
   if(a>=1e6){ val=a/1e6; suf='T'; }
   else if(a>=1e3){ val=a/1e3; suf='B'; }
   else { val=a; suf='M'; }
-  return sign+cur+' '+val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+suf;
+  const txt = sign+cur+' '+val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+suf;
+  return neg ? '<span class="cr">'+txt+'</span>' : txt;
 }
 function b3fmtInt(v){
   if(isNaN(v)) return '—';
-  return Math.round(v).toLocaleString('pt-BR');
+  const neg = v<0;
+  const txt = Math.round(v).toLocaleString('pt-BR');
+  return neg ? '<span class="cr">'+txt+'</span>' : txt;
 }
 function b3fmtPct(v, decimals){
   if(isNaN(v)) return '—';
