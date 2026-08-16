@@ -245,7 +245,7 @@ body{padding:12px}
 .b3-stat-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
 .b3-stat-icon{font-size:12px;line-height:1}
 .b3-stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-.b3-stat-value{font-size:17px;font-weight:700;margin-top:4px;letter-spacing:-.2px}
+.b3-stat-value{font-size:17px;font-weight:400;margin-top:4px;letter-spacing:-.2px}
 .b3-stat-sub{font-size:9px;color:var(--text3);margin-top:3px}
 
 /* grade de painéis (mesmo espírito do .dash do Fluxo Financeiro) */
@@ -275,6 +275,7 @@ body{padding:12px}
 .b3-years summary::before{content:'▸';display:inline-block;transition:transform .15s;color:var(--text3)}
 .b3-years[open] summary::before{transform:rotate(90deg)}
 .b3-years summary:hover{color:var(--text)}
+.b3-panel .wtbl tr.wtotal td{font-weight:400}
 
 @media(max-width:1100px){.b3-grid{grid-template-columns:1fr}.b3-panel.full{grid-column:auto}}
 @media(max-width:760px){.b3-stats{grid-template-columns:1fr 1fr}}
