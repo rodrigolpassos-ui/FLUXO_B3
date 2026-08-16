@@ -176,7 +176,7 @@ body{padding:12px}
 .import-link{font-size:9px;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:2px;user-select:none}
 .import-link:hover{color:var(--text)}
 
-.cg{color:var(--green)}.cr{color:var(--red)}.cy{color:var(--yellow)}.cm{color:var(--text2)}
+.cg{color:var(--green)}.cr{color:var(--red)}.cy{color:var(--yellow)}.cm{color:var(--text2)}.cbl{color:var(--blue)}
 
 .title-editable{background:transparent;border:none;border-bottom:1px dashed var(--border);color:inherit;font-family:'Courier New',monospace;font-size:13px;font-weight:700;width:140px;outline:none;cursor:text;padding:0 2px}
 .title-editable:focus{border-bottom-color:var(--blue)}
@@ -1770,6 +1770,33 @@ function parseB3Report(text){
 function b3fmtMoneyMM(vMillions, cur){
   cur = cur || 'R$';
   if(isNaN(vMillions)) return '—';
+  const sign = vMillions<0 ? '-' : '';
+  const a = Math.abs(vMillions);
+  let val, suf;
+  if(a>=1e6){ val=a/1e6; suf='T'; }
+  else if(a>=1e3){ val=a/1e3; suf='B'; }
+  else { val=a; suf='M'; }
+  return sign+cur+' '+val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+suf;
+}
+function b3fmtInt(v){
+  if(isNaN(v)) return '—';
+  return Math.round(v).toLocaleString('pt-BR');
+}
+function b3fmtPct(v, decimals){
+  if(isNaN(v)) return '—';
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:decimals==null?1:decimals,maximumFractionDigits:decimals==null?1:decimals})+'%';
+}
+function b3fmtVar(v){
+  if(isNaN(v)) return '—';
+  const cls = v>0?'cbl':v<0?'cr':'cm';
+  const sign = v>0?'+':'';
+  return '<span class="'+cls+'">'+sign+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%</span>';
+}
+
+// ── construção de tabelas HTML (estilo .wtbl) ───────────────────────────────
+function b3fmtMoneySaldo(vMillions, cur){
+  cur = cur || 'R$';
+  if(isNaN(vMillions)) return '—';
   const neg = vMillions<0;
   const sign = neg ? '-' : '';
   const a = Math.abs(vMillions);
@@ -1778,27 +1805,11 @@ function b3fmtMoneyMM(vMillions, cur){
   else if(a>=1e3){ val=a/1e3; suf='B'; }
   else { val=a; suf='M'; }
   const txt = sign+cur+' '+val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+suf;
-  return neg ? '<span class="cr">'+txt+'</span>' : txt;
-}
-function b3fmtInt(v){
-  if(isNaN(v)) return '—';
-  const neg = v<0;
-  const txt = Math.round(v).toLocaleString('pt-BR');
-  return neg ? '<span class="cr">'+txt+'</span>' : txt;
-}
-function b3fmtPct(v, decimals){
-  if(isNaN(v)) return '—';
-  return v.toLocaleString('pt-BR',{minimumFractionDigits:decimals==null?1:decimals,maximumFractionDigits:decimals==null?1:decimals})+'%';
-}
-function b3fmtVar(v){
-  if(isNaN(v)) return '—';
-  const cls = v>0?'cg':v<0?'cr':'cm';
-  const sign = v>0?'+':'';
-  return '<span class="'+cls+'">'+sign+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%</span>';
+  const cls = neg ? 'cr' : (vMillions>0 ? 'cbl' : '');
+  return cls ? '<span class="'+cls+'">'+txt+'</span>' : txt;
 }
 
-// ── construção de tabelas HTML (estilo .wtbl) ───────────────────────────────
-// colDefs: [{label, type:'money'|'moneyusd'|'int'|'pct'|'var'}]
+// colDefs: [{label, type:'money'|'moneyusd'|'moneySaldo'|'int'|'pct'|'var'}]
 function b3BuildTable(rows, colDefs){
   if(!rows || !rows.length) return '';
   let h = '<div class="wtbl-wrap"><table class="wtbl"><thead><tr><th>Período</th>';
@@ -1813,6 +1824,7 @@ function b3BuildTable(rows, colDefs){
       let cell;
       if(c.type==='money') cell = b3fmtMoneyMM(n,'R$');
       else if(c.type==='moneyusd') cell = b3fmtMoneyMM(n,'US$');
+      else if(c.type==='moneySaldo') cell = b3fmtMoneySaldo(n,'R$');
       else if(c.type==='int') cell = b3fmtInt(n);
       else if(c.type==='pct') cell = b3fmtPct(n);
       else if(c.type==='var') cell = b3fmtVar(n);
@@ -2056,11 +2068,11 @@ function renderB3(data){
     h += '<div class="b3-block"><div class="b3-block-title"><h3>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-block-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
     h += '<div class="b3-chart-wrap"><canvas id="b3-chart-estrangeiro"></canvas></div>';
     h += b3BuildTable(data.estrangeiro.months?data.estrangeiro.months.rows:[], [
-      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'money'}
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
     ]);
     h += '<div class="b3-block-title"><h3>Movimentação — Anos Anteriores</h3></div>';
     h += b3BuildTable(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
-      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'money'}
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
     ]);
     h += '</div>';
   }
