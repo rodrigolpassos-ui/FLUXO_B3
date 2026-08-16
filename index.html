@@ -17,6 +17,7 @@
   --overlay:rgba(20,30,50,.45);
   --tbl-row-border:#e3e8ef;
   --btn-blue-bg:#ddeaff;--btn-blue-hover:#c5dcff;
+  --btn-gold-bg:#fdf0d5;--btn-gold-hover:#fbe4b0;
   --b-buy-bg:#e6f6ec;--b-buy-bd:#a9d9bb;
   --b-sell-bg:#fde8ea;--b-sell-bd:#f0b3b9;
   --b-neu-bg:#eef1f6;--b-neu-bd:#d4dae3;
@@ -35,6 +36,7 @@
   --overlay:rgba(0,0,0,.78);
   --tbl-row-border:#1c2128;
   --btn-blue-bg:#0d2a45;--btn-blue-hover:#1a3d5c;
+  --btn-gold-bg:#3a2c0d;--btn-gold-hover:#4d3b12;
   --b-buy-bg:#0d3b2a;--b-buy-bd:#1a5c3a;
   --b-sell-bg:#3d1515;--b-sell-bd:#5c2020;
   --b-neu-bg:#1c2128;--b-neu-bd:#30363d;
@@ -59,6 +61,16 @@ body{padding:12px}
 .btn:hover{border-color:var(--blue);color:var(--blue)}
 .btn-blue{background:var(--btn-blue-bg);border-color:var(--blue);color:var(--blue)}
 .btn-blue:hover{background:var(--btn-blue-hover)}
+.btn-gold{background:var(--btn-gold-bg);border-color:var(--yellow);color:var(--yellow)}
+.btn-gold:hover{background:var(--btn-gold-hover)}
+
+/* ===== ABAS DE VISÃO (Fluxo Financeiro / Dados B3) ===== */
+.view-tabs{display:flex;gap:2px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:2px}
+.view-tab{font-family:'Courier New',monospace;font-size:10px;padding:6px 12px;border-radius:4px;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .15s;white-space:nowrap}
+.view-tab:hover{color:var(--text)}
+.view-tab.active{background:var(--btn-blue-bg);color:var(--blue);font-weight:700}
+.view-tab.active#tab-view-b3{background:var(--btn-gold-bg);color:var(--yellow)}
+.actions-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:30px;height:26px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);cursor:pointer;font-size:14px;line-height:1;transition:all .15s;padding:0}
 .theme-toggle:hover{border-color:var(--blue);color:var(--blue)}
 .theme-ico{transition:transform .3s ease}
@@ -223,6 +235,27 @@ body{padding:12px}
   .panel-stats{grid-template-columns:1fr}
   .price-main{font-size:13px}
 }
+
+/* ===== DADOS DE MERCADO B3 ===== */
+.b3-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 14px 2px}
+.b3-stat{background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:9px 12px}
+.b3-stat-label{font-size:9px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.b3-stat-value{font-size:14px;font-weight:700;margin-top:3px}
+.b3-stat-sub{font-size:9px;color:var(--text3);margin-top:2px}
+.b3-block{border-top:1px solid var(--border);padding-top:2px;margin-top:6px}
+.b3-block:first-of-type{border-top:none;margin-top:0}
+.b3-block-title{display:flex;align-items:center;justify-content:space-between;padding:9px 14px 4px;flex-wrap:wrap;gap:4px}
+.b3-block-title h3{font-size:11px;font-weight:700;letter-spacing:.3px}
+.b3-block-note{font-size:9px;color:var(--text3)}
+.b3-chart-wrap{height:190px;padding:4px 14px 16px}
+.b3-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0 14px 8px}
+.b3-legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
+.b3-legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.b3-src{font-size:9px;color:var(--text3);line-height:1.7;padding:2px 14px}
+.b3-src a{color:var(--blue);text-decoration:none}
+.b3-src a:hover{text-decoration:underline}
+@media(max-width:760px){.b3-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.b3-stats{grid-template-columns:1fr}}
 </style>
 <script>
 // Aplica o tema salvo o quanto antes (evita "piscar"). Padrão: claro.
@@ -295,12 +328,23 @@ Terra	12,90	-465330904	-13079"></textarea>
   <div class="top-bar-title">FLUXO FINANCEIRO</div>
   <div class="top-bar-right">
     <span class="top-bar-time" id="clock">—</span>
-    <button class="btn btn-blue" id="btn-open">⬆ Importar Dados da Planilha</button>
-    <button class="btn" id="btn-export">💾 Exportar backup</button>
-    <button class="btn" id="btn-import">📂 Importar backup</button>
-    <input type="file" id="file-import" accept=".json,application/json" style="display:none">
-    <button class="btn" id="btn-clear-panels">🗑 Limpar painéis</button>
-    <button class="btn" id="btn-report">📄 Relatório PDF</button>
+    <div class="view-tabs">
+      <button class="view-tab active" id="tab-view-fluxo">📈 Fluxo Financeiro</button>
+      <button class="view-tab" id="tab-view-b3">📊 Dados de Mercado B3</button>
+    </div>
+    <div class="actions-group" id="actions-fluxo">
+      <button class="btn btn-blue" id="btn-open">⬆ Importar Dados da Planilha</button>
+      <button class="btn" id="btn-export">💾 Exportar backup</button>
+      <button class="btn" id="btn-import">📂 Importar backup</button>
+      <input type="file" id="file-import" accept=".json,application/json" style="display:none">
+      <button class="btn" id="btn-clear-panels">🗑 Limpar painéis</button>
+      <button class="btn" id="btn-report">📄 Relatório PDF</button>
+    </div>
+    <div class="actions-group" id="actions-b3" style="display:none">
+      <button class="btn btn-gold" id="btn-open-b3">⬆ Importar CSV da B3</button>
+      <input type="file" id="file-b3" accept=".csv,text/csv" style="display:none">
+      <button class="btn" id="btn-clear-b3-top">🗑 Limpar dados B3</button>
+    </div>
     <button class="theme-toggle" id="btn-theme" title="Alternar tema claro/escuro" aria-label="Alternar tema">
       <span class="theme-ico" id="theme-ico">☀</span>
     </button>
@@ -308,6 +352,7 @@ Terra	12,90	-465330904	-13079"></textarea>
 </div>
 
 <!-- ===== DASHBOARD ===== -->
+<div id="view-fluxo">
 <div class="dash">
 
   <!-- ÍNDICE / WIN -->
@@ -521,6 +566,40 @@ Terra	12,90	-465330904	-13079"></textarea>
     </div>
   </div>
 </div>
+
+</div><!-- /view-fluxo -->
+
+<!-- ===== DADOS DE MERCADO B3 ===== -->
+<div id="view-b3" style="display:none">
+<div class="weekly" id="b3-wrap">
+  <div class="weekly-panel">
+    <div class="weekly-head">
+      <div>
+        <div class="wtitle"><span style="color:var(--blue)">📊</span> Dados de Mercado B3 — Visão Geral</div>
+        <div class="wsub" id="b3-sub">Nenhum relatório importado ainda</div>
+      </div>
+      <div class="weekly-actions">
+        <button class="btn btn-mini" id="btn-clear-b3" title="Remove os dados de mercado B3 importados">🗑 Limpar dados B3</button>
+      </div>
+    </div>
+    <div id="b3-body">
+      <div class="weekly-empty">
+        <strong>Sem dados de mercado</strong>
+        Clique em "⬆ Importar CSV da B3" no topo da página e selecione o arquivo .csv baixado em
+        B3 › Market Data e Índices › Consultas › Mercado à Vista › Dados de Mercado.
+      </div>
+    </div>
+    <div class="b3-src">
+      Fonte: <a href="https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/consultas/mercado-a-vista/dados-de-mercado/" target="_blank" rel="noopener">B3 — Dados de Mercado</a>.
+      O arquivo é processado inteiramente no seu navegador — nenhuma informação sai do computador.
+    </div>
+    <div class="weekly-foot">
+      <span>Todos os valores replicam integralmente o relatório oficial da B3, apenas formatados para leitura.</span>
+      <span id="b3-updated">—</span>
+    </div>
+  </div>
+</div>
+</div><!-- /view-b3 -->
 
 <script>
 // ─── CLOCK ───────────────────────────────────────────────────────────────────
@@ -1514,7 +1593,7 @@ updateThemeIcon();
 
 // ─── EXPORTAR / IMPORTAR BACKUP ───────────────────────────────────────────────
 // Empacota tudo que fica salvo no navegador num arquivo .json, para levar a outro PC.
-const BACKUP_KEYS = ['fluxo_raw_v1','fluxo_semanal_v2','fluxo_semanal_v1','fluxo_periodo_v1','fluxo_theme'];
+const BACKUP_KEYS = ['fluxo_raw_v1','fluxo_semanal_v2','fluxo_semanal_v1','fluxo_periodo_v1','fluxo_theme','fluxo_b3_market_v1'];
 
 function exportBackup(){
   const data = {};
@@ -1559,6 +1638,7 @@ function applyImportedStore(store){
   try{ restorePanels(); }catch(e){}
   try{ renderWeekly(); }catch(e){}
   try{ renderPeriod(); }catch(e){}
+  try{ restoreB3(); }catch(e){}
   // aplica o tema importado, se houver
   try{
     const t = localStorage.getItem('fluxo_theme');
@@ -1597,6 +1677,465 @@ document.getElementById('file-import').addEventListener('change', function(){
   if(this.files && this.files[0]) importBackupFromFile(this.files[0]);
   this.value = '';   // permite reimportar o mesmo arquivo depois
 });
+
+// ══════════════════════════════════════════════════════════════════════════
+// ===== DADOS DE MERCADO B3 (relatório .csv oficial) =========================
+// ══════════════════════════════════════════════════════════════════════════
+const B3_KEY = 'fluxo_b3_market_v1';
+const B3_MONTH_MAP = {jan:'Jan',fev:'Fev',mar:'Mar',abr:'Abr',mai:'Mai',jun:'Jun',jul:'Jul',ago:'Ago',set:'Set',out:'Out',nov:'Nov',dez:'Dez'};
+
+// ── parsing de números no padrão B3 (vírgula decimal, sem milhar) ──────────
+function b3Num(s){
+  if(s===undefined||s===null) return NaN;
+  let t = String(s).trim();
+  if(t==='') return NaN;
+  const neg = /^-/.test(t);
+  t = t.replace(/%/g,'').replace(/^-/,'').trim();
+  t = t.replace(',', '.');
+  const n = parseFloat(t);
+  if(isNaN(n)) return NaN;
+  return neg ? -n : n;
+}
+
+function b3Label(raw){
+  if(!raw) return raw;
+  const r = raw.trim();
+  const agg = r.match(/^(\d{4})\(\*\)$/);
+  if(agg) return agg[1]+' (parcial)';
+  const m = r.match(/^([A-Za-zçÇ]{3})\/[A-Za-z]{3}\/(\d{2,4})$/);
+  if(m){
+    const mon = B3_MONTH_MAP[m[1].toLowerCase()] || m[1];
+    let yr = m[2]; if(yr.length===2) yr = '20'+yr;
+    return mon+'/'+yr.slice(2);
+  }
+  return r;
+}
+function b3IsAgg(raw){ return /\(\*\)/.test(raw||''); }
+
+// ── parser do relatório oficial (texto bruto do .csv) ───────────────────────
+function parseB3Report(text){
+  const lines = text.split(/\r\n|\n|\r/).map(l=>l.replace(/\uFEFF/g,''));
+  function findLine(needle, from){
+    from = from||0;
+    if(from<0) from=0;
+    for(let i=from;i<lines.length;i++){ if(lines[i].indexOf(needle)!==-1) return i; }
+    return -1;
+  }
+  function splitRow(l){ return l.split(';').map(s=>s.trim()); }
+  function isDataLine(l){
+    if(!l) return false;
+    if(l.indexOf(';')===-1) return false;
+    const t = l.trim();
+    if(/^\(\*\)/.test(t)) return false;
+    if(/^Nota/i.test(t)) return false;
+    if(/^Obs/i.test(t)) return false;
+    if(/^\*\*/.test(t)) return false;
+    return true;
+  }
+  function readTableAt(headerIdx){
+    if(headerIdx===-1) return null;
+    const rows=[];
+    let i=headerIdx+1;
+    while(i<lines.length && isDataLine(lines[i])){ rows.push(splitRow(lines[i])); i++; }
+    if(!rows.length) return null;
+    return { rows };
+  }
+  function section(titleNeedle, monthHeaderNeedle, yearHeaderNeedle){
+    const tIdx = findLine(titleNeedle);
+    if(tIdx===-1) return {months:null, years:null};
+    const mIdx = findLine(monthHeaderNeedle, tIdx);
+    const monthTbl = readTableAt(mIdx);
+    const searchFrom = mIdx===-1 ? tIdx+1 : mIdx+1;
+    const anosIdx = findLine('ANOS ANTERIORES', searchFrom);
+    const yStart = anosIdx===-1 ? searchFrom : anosIdx;
+    const yIdx = findLine(yearHeaderNeedle, yStart);
+    const yearTbl = readTableAt(yIdx);
+    return {months:monthTbl, years:yearTbl};
+  }
+
+  const volume        = section('Volume Total (R$ milhões)', 'Mês/Month;À vista', 'Ano / Year;À vista');
+  const negocios       = section('Nº de Negócios Total', 'Mês/Month;À vista', 'Ano / Year;À vista');
+  const volumeMedio    = section('Volume Médio Diário', 'Mês/Month;R$ Milhões', 'Ano / Year;R$ Milhões');
+  const negociosMedio  = section('Nº de Negócios Médio Diário', 'Período / Period;Negócios', 'Ano / Year;Negócios');
+  const participacao   = section('Fatia de investidores mês a mês', 'Month Investor Type', 'Year Investor Type');
+  const estrangeiro    = section('Movimentação dos Investidores Estrangeiros Mensal', 'Mês / Month;Compras', 'Ano / Year;Compras');
+
+  const anyData = [volume,negocios,volumeMedio,negociosMedio,participacao,estrangeiro].some(s=>s.months||s.years);
+  if(!anyData) throw new Error('Não foi possível reconhecer o layout do arquivo. Confirme que é o .csv exportado direto da página "Dados de Mercado" da B3.');
+
+  return { volume, negocios, volumeMedio, negociosMedio, participacao, estrangeiro, importedAt: new Date().toISOString() };
+}
+
+// ── formatação ───────────────────────────────────────────────────────────
+function b3fmtMoneyMM(vMillions, cur){
+  cur = cur || 'R$';
+  if(isNaN(vMillions)) return '—';
+  const sign = vMillions<0 ? '-' : '';
+  const a = Math.abs(vMillions);
+  let val, suf;
+  if(a>=1e6){ val=a/1e6; suf='T'; }
+  else if(a>=1e3){ val=a/1e3; suf='B'; }
+  else { val=a; suf='M'; }
+  return sign+cur+' '+val.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+suf;
+}
+function b3fmtInt(v){
+  if(isNaN(v)) return '—';
+  return Math.round(v).toLocaleString('pt-BR');
+}
+function b3fmtPct(v, decimals){
+  if(isNaN(v)) return '—';
+  return v.toLocaleString('pt-BR',{minimumFractionDigits:decimals==null?1:decimals,maximumFractionDigits:decimals==null?1:decimals})+'%';
+}
+function b3fmtVar(v){
+  if(isNaN(v)) return '—';
+  const cls = v>0?'cg':v<0?'cr':'cm';
+  const sign = v>0?'+':'';
+  return '<span class="'+cls+'">'+sign+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%</span>';
+}
+
+// ── construção de tabelas HTML (estilo .wtbl) ───────────────────────────────
+// colDefs: [{label, type:'money'|'moneyusd'|'int'|'pct'|'var'}]
+function b3BuildTable(rows, colDefs){
+  if(!rows || !rows.length) return '';
+  let h = '<div class="wtbl-wrap"><table class="wtbl"><thead><tr><th>Período</th>';
+  colDefs.forEach(c=>{ h += '<th>'+esc(c.label)+'</th>'; });
+  h += '</tr></thead><tbody>';
+  rows.forEach(r=>{
+    const isAgg = b3IsAgg(r[0]);
+    h += '<tr'+(isAgg?' class="wtotal"':'')+'><td>'+esc(b3Label(r[0]))+'</td>';
+    colDefs.forEach((c,i)=>{
+      const raw = r[i+1];
+      const n = b3Num(raw);
+      let cell;
+      if(c.type==='money') cell = b3fmtMoneyMM(n,'R$');
+      else if(c.type==='moneyusd') cell = b3fmtMoneyMM(n,'US$');
+      else if(c.type==='int') cell = b3fmtInt(n);
+      else if(c.type==='pct') cell = b3fmtPct(n);
+      else if(c.type==='var') cell = b3fmtVar(n);
+      else cell = esc(raw==null?'—':raw);
+      h += '<td>'+cell+'</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  return h;
+}
+
+function b3LastRealRow(tbl){
+  if(!tbl || !tbl.rows) return null;
+  const reais = tbl.rows.filter(r=>!b3IsAgg(r[0]));
+  return reais.length ? reais[reais.length-1] : (tbl.rows[tbl.rows.length-1]||null);
+}
+function b3AggRow(tbl){
+  if(!tbl || !tbl.rows) return null;
+  return tbl.rows.find(r=>b3IsAgg(r[0])) || null;
+}
+
+// ── gráficos ─────────────────────────────────────────────────────────────
+const b3Charts = {};
+function b3CssVars(){
+  const css = getComputedStyle(document.documentElement);
+  const cv = n => css.getPropertyValue(n).trim();
+  return {
+    tipBg:cv('--tip-bg'), tipBd:cv('--tip-border'), tipTitle:cv('--tip-title'), tipBody:cv('--tip-body'),
+    tick:cv('--text2'), grid:cv('--grid-line'), green:cv('--green'), red:cv('--red'),
+    blue:cv('--blue'), yellow:cv('--yellow'), purple:cv('--purple'), gray:cv('--text3')
+  };
+}
+
+function b3RenderVolumeChart(volumeMonths){
+  const el = document.getElementById('b3-chart-volume');
+  if(!el) return;
+  if(b3Charts.volume) b3Charts.volume.destroy();
+  const rows = (volumeMonths?volumeMonths.rows:[]).filter(r=>!b3IsAgg(r[0]));
+  const v = b3CssVars();
+  const labels = rows.map(r=>b3Label(r[0]));
+  const data = rows.map(r=>b3Num(r[5])/1000); // total em bilhões
+  b3Charts.volume = new Chart(el,{
+    type:'bar',
+    data:{ labels, datasets:[{ label:'Volume Total', data, backgroundColor:v.blue, borderWidth:0, borderRadius:3, maxBarThickness:36 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:v.tipBg, borderColor:v.tipBd, borderWidth:1, titleColor:v.tipTitle, bodyColor:v.tipBody,
+          titleFont:{family:'Courier New',size:9}, bodyFont:{family:'Courier New',size:10},
+          callbacks:{ label:c=>' R$ '+c.raw.toLocaleString('pt-BR',{maximumFractionDigits:2})+'B' }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},maxRotation:0}, grid:{display:false}, border:{display:false} },
+        y:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},callback:x=>'R$ '+x+'B'}, grid:{color:v.grid}, border:{display:false} }
+      }
+    }
+  });
+}
+
+function b3RenderParticipacaoChart(partMonths){
+  const el = document.getElementById('b3-chart-part');
+  if(!el) return;
+  if(b3Charts.part) b3Charts.part.destroy();
+  const rows = (partMonths?partMonths.rows:[]).filter(r=>!b3IsAgg(r[0]));
+  const v = b3CssVars();
+  const labels = rows.map(r=>b3Label(r[0]));
+  const series = [
+    { key:1, label:'Pessoas Físicas', color:v.green },
+    { key:2, label:'Institucionais', color:v.purple },
+    { key:3, label:'Estrangeiro', color:v.blue },
+    { key:4, label:'Inst. Financeiras', color:v.yellow },
+    { key:5, label:'Outros', color:v.gray }
+  ];
+  const datasets = series.map(s=>({
+    label:s.label, data: rows.map(r=>b3Num(r[s.key])),
+    borderColor:s.color, backgroundColor:s.color, borderWidth:1.5, pointRadius:0, tension:.35, fill:false
+  }));
+  b3Charts.part = new Chart(el,{
+    type:'line',
+    data:{ labels, datasets },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:v.tipBg, borderColor:v.tipBd, borderWidth:1, titleColor:v.tipTitle, bodyColor:v.tipBody,
+          titleFont:{family:'Courier New',size:9}, bodyFont:{family:'Courier New',size:10},
+          callbacks:{ label:c=>' '+c.dataset.label+': '+c.raw.toLocaleString('pt-BR',{maximumFractionDigits:1})+'%' }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},maxRotation:0}, grid:{color:v.grid}, border:{display:false} },
+        y:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},callback:x=>x+'%'}, grid:{color:v.grid}, border:{display:false} }
+      }
+    }
+  });
+}
+
+function b3RenderEstrangeiroChart(estMonths){
+  const el = document.getElementById('b3-chart-estrangeiro');
+  if(!el) return;
+  if(b3Charts.estrangeiro) b3Charts.estrangeiro.destroy();
+  const rows = (estMonths?estMonths.rows:[]).filter(r=>!b3IsAgg(r[0]));
+  const v = b3CssVars();
+  const labels = rows.map(r=>b3Label(r[0]));
+  const data = rows.map(r=>b3Num(r[4]));
+  const colors = data.map(x=> x>=0 ? v.green : v.red);
+  b3Charts.estrangeiro = new Chart(el,{
+    type:'bar',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:0, borderRadius:3, maxBarThickness:28 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:v.tipBg, borderColor:v.tipBd, borderWidth:1, titleColor:v.tipTitle, bodyColor:v.tipBody,
+          titleFont:{family:'Courier New',size:9}, bodyFont:{family:'Courier New',size:10},
+          callbacks:{ label:c=>' Saldo: R$ '+c.raw.toLocaleString('pt-BR',{maximumFractionDigits:1})+'M' }
+        }
+      },
+      scales:{
+        x:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},maxRotation:0}, grid:{display:false}, border:{display:false} },
+        y:{ ticks:{color:v.tick,font:{size:9,family:'Courier New'},callback:x=>x+'M'}, grid:{color:v.grid}, border:{display:false} }
+      }
+    }
+  });
+}
+
+// ── render principal ─────────────────────────────────────────────────────
+function renderB3(data){
+  const body = document.getElementById('b3-body');
+  const sub  = document.getElementById('b3-sub');
+  const upd  = document.getElementById('b3-updated');
+  if(!data){
+    body.innerHTML = '<div class="weekly-empty"><strong>Sem dados de mercado</strong>Clique em "📊 Importar Dados de Mercado B3" no topo da página e selecione o arquivo .csv baixado da B3.</div>';
+    sub.textContent = 'Nenhum relatório importado ainda';
+    upd.textContent = '—';
+    return;
+  }
+
+  const volAgg  = b3AggRow(data.volume && data.volume.months);
+  const negAgg  = b3AggRow(data.negocios && data.negocios.months);
+  const estAgg  = b3AggRow(data.estrangeiro && data.estrangeiro.months);
+  const volLast = b3LastRealRow(data.volume && data.volume.months);
+
+  sub.textContent = volAgg ? ('Acumulado '+b3Label(volAgg[0])+' — atualizado a cada importação') : 'Relatório importado';
+  upd.textContent = 'Importado em: ' + new Date(data.importedAt).toLocaleString('pt-BR');
+
+  let h = '';
+
+  // ── cards de resumo ──
+  h += '<div class="b3-stats">';
+  h += '<div class="b3-stat"><div class="b3-stat-label">Volume Total '+(volAgg?esc(b3Label(volAgg[0])):'—')+'</div><div class="b3-stat-value">'+(volAgg?b3fmtMoneyMM(b3Num(volAgg[5])):'—')+'</div><div class="b3-stat-sub">À vista + Termo + Opções + Bloco</div></div>';
+  h += '<div class="b3-stat"><div class="b3-stat-label">Último mês — '+(volLast?esc(b3Label(volLast[0])):'—')+'</div><div class="b3-stat-value">'+(volLast?b3fmtMoneyMM(b3Num(volLast[5])):'—')+'</div><div class="b3-stat-sub">Volume negociado no mês</div></div>';
+  h += '<div class="b3-stat"><div class="b3-stat-label">Nº Negócios '+(negAgg?esc(b3Label(negAgg[0])):'—')+'</div><div class="b3-stat-value">'+(negAgg?b3fmtInt(b3Num(negAgg[5])):'—')+'</div><div class="b3-stat-sub">Total de negócios registrados</div></div>';
+  const estVal = estAgg?b3Num(estAgg[4]):NaN;
+  h += '<div class="b3-stat"><div class="b3-stat-label">Saldo Estrangeiro '+(estAgg?esc(b3Label(estAgg[0])):'—')+'</div><div class="b3-stat-value '+(isNaN(estVal)?'':(estVal>=0?'cg':'cr'))+'">'+(estAgg?b3fmtMoneyMM(estVal):'—')+'</div><div class="b3-stat-sub">Compras − Vendas + IPO/Follow-on</div></div>';
+  h += '</div>';
+
+  // ── volume negociado ──
+  if(data.volume && (data.volume.months || data.volume.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Volume Negociado — Mensal (R$)</h3><span class="b3-block-note">À vista · Termo · Opções · Bloco · Total</span></div>';
+    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-volume"></canvas></div>';
+    h += b3BuildTable(data.volume.months?data.volume.months.rows:[], [
+      {label:'À Vista',type:'money'},{label:'Termo',type:'money'},{label:'Opções',type:'money'},{label:'Em Bloco',type:'money'},{label:'Total',type:'money'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Volume Negociado — Anos Anteriores (R$)</h3></div>';
+    h += b3BuildTable(data.volume.years?data.volume.years.rows:[], [
+      {label:'À Vista',type:'money'},{label:'Termo',type:'money'},{label:'Opções',type:'money'},{label:'Em Bloco',type:'money'},{label:'Total',type:'money'}
+    ]);
+    h += '</div>';
+  }
+
+  // ── volume médio diário ──
+  if(data.volumeMedio && (data.volumeMedio.months || data.volumeMedio.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Volume Médio Diário</h3><span class="b3-block-note">R$ e US$ milhões, com variação % sobre o mês anterior</span></div>';
+    h += b3BuildTable(data.volumeMedio.months?data.volumeMedio.months.rows:[], [
+      {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Volume Médio Diário — Anos Anteriores</h3></div>';
+    h += b3BuildTable(data.volumeMedio.years?data.volumeMedio.years.rows:[], [
+      {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
+    ]);
+    h += '</div>';
+  }
+
+  // ── número de negócios ──
+  if(data.negocios && (data.negocios.months || data.negocios.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Número de Negócios — Mensal</h3><span class="b3-block-note">À vista · Termo · Opções · Bloco · Total</span></div>';
+    h += b3BuildTable(data.negocios.months?data.negocios.months.rows:[], [
+      {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Número de Negócios — Anos Anteriores</h3></div>';
+    h += b3BuildTable(data.negocios.years?data.negocios.years.rows:[], [
+      {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
+    ]);
+    h += '</div>';
+  }
+
+  // ── número de negócios médio diário ──
+  if(data.negociosMedio && (data.negociosMedio.months || data.negociosMedio.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Número de Negócios — Média Diária</h3></div>';
+    h += b3BuildTable(data.negociosMedio.months?data.negociosMedio.months.rows:[], [
+      {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Média Diária — Anos Anteriores</h3></div>';
+    h += b3BuildTable(data.negociosMedio.years?data.negociosMedio.years.rows:[], [
+      {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
+    ]);
+    h += '</div>';
+  }
+
+  // ── participação por tipo de investidor ──
+  if(data.participacao && (data.participacao.months || data.participacao.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Participação por Tipo de Investidor (%) — Mensal</h3></div>';
+    h += '<div class="b3-legend">'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--green)"></span>Pessoas Físicas</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--purple)"></span>Institucionais</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--blue)"></span>Estrangeiro</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--yellow)"></span>Inst. Financeiras</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--text3)"></span>Outros</div>'+
+    '</div>';
+    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-part"></canvas></div>';
+    h += b3BuildTable(data.participacao.months?data.participacao.months.rows:[], [
+      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Participação — Anos Anteriores</h3></div>';
+    h += b3BuildTable(data.participacao.years?data.participacao.years.rows:[], [
+      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
+    ]);
+    h += '</div>';
+  }
+
+  // ── movimentação de investidores estrangeiros ──
+  if(data.estrangeiro && (data.estrangeiro.months || data.estrangeiro.years)){
+    h += '<div class="b3-block"><div class="b3-block-title"><h3>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-block-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
+    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-estrangeiro"></canvas></div>';
+    h += b3BuildTable(data.estrangeiro.months?data.estrangeiro.months.rows:[], [
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'money'}
+    ]);
+    h += '<div class="b3-block-title"><h3>Movimentação — Anos Anteriores</h3></div>';
+    h += b3BuildTable(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'money'}
+    ]);
+    h += '</div>';
+  }
+
+  body.innerHTML = h;
+  b3RenderVolumeChart(data.volume && data.volume.months);
+  b3RenderParticipacaoChart(data.participacao && data.participacao.months);
+  b3RenderEstrangeiroChart(data.estrangeiro && data.estrangeiro.months);
+}
+
+// ── storage ──────────────────────────────────────────────────────────────
+function saveB3(data){
+  try{ if(typeof localStorage!=='undefined') localStorage.setItem(B3_KEY, JSON.stringify(data)); }catch(e){}
+}
+function loadB3(){
+  try{
+    const r = (typeof localStorage!=='undefined') && localStorage.getItem(B3_KEY);
+    if(r) return JSON.parse(r);
+  }catch(e){}
+  return null;
+}
+function restoreB3(){ renderB3(loadB3()); }
+
+function importB3File(file){
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    let data;
+    try{ data = parseB3Report(reader.result); }
+    catch(e){ alert('Não foi possível ler o arquivo: ' + e.message); return; }
+    saveB3(data);
+    renderB3(data);
+  };
+  reader.onerror = ()=> alert('Não foi possível ler o arquivo selecionado.');
+  // o export oficial da B3 vem em ISO-8859-1 (Latin-1)
+  reader.readAsText(file, 'ISO-8859-1');
+}
+
+function clearB3Data(){
+  if(!confirm('Remover os dados de mercado B3 importados?')) return;
+  try{ if(typeof localStorage!=='undefined') localStorage.removeItem(B3_KEY); }catch(e){}
+  renderB3(null);
+}
+
+document.getElementById('btn-open-b3').addEventListener('click', ()=>{
+  document.getElementById('file-b3').click();
+});
+document.getElementById('file-b3').addEventListener('change', function(){
+  if(this.files && this.files[0]) importB3File(this.files[0]);
+  this.value = '';
+});
+document.getElementById('btn-clear-b3').addEventListener('click', clearB3Data);
+document.getElementById('btn-clear-b3-top').addEventListener('click', clearB3Data);
+
+restoreB3();
+
+// ── troca de aba: Fluxo Financeiro <-> Dados de Mercado B3 ────────────────
+function switchView(view){
+  const isB3 = view === 'b3';
+  document.getElementById('view-fluxo').style.display = isB3 ? 'none' : '';
+  document.getElementById('view-b3').style.display = isB3 ? '' : 'none';
+  document.getElementById('actions-fluxo').style.display = isB3 ? 'none' : '';
+  document.getElementById('actions-b3').style.display = isB3 ? '' : 'none';
+  document.getElementById('tab-view-fluxo').classList.toggle('active', !isB3);
+  document.getElementById('tab-view-b3').classList.toggle('active', isB3);
+  try{ localStorage.setItem('fluxo_active_view', view); }catch(e){}
+  if(isB3){
+    // recalcula o tamanho dos gráficos (estavam ocultos, com largura 0)
+    requestAnimationFrame(()=>{
+      Object.keys(b3Charts).forEach(k=>{ if(b3Charts[k]) b3Charts[k].resize(); });
+    });
+  }
+}
+document.getElementById('tab-view-fluxo').addEventListener('click', ()=>switchView('fluxo'));
+document.getElementById('tab-view-b3').addEventListener('click', ()=>switchView('b3'));
+(function(){
+  let saved = 'fluxo';
+  try{ saved = localStorage.getItem('fluxo_active_view') || 'fluxo'; }catch(e){}
+  switchView(saved);
+})();
 </script>
 </body>
 </html>
