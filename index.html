@@ -259,6 +259,18 @@ body{padding:12px}
 .b3-panel-head h3{font-size:11.5px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:7px}
 .b3-panel-head .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--accent,var(--blue))}
 .b3-panel-note{font-size:9px;color:var(--text3)}
+
+/* painéis recolhíveis (Ver / Ocultar) */
+.b3-head-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.b3-toggle{font-family:'Courier New',monospace;font-size:9px;letter-spacing:.5px;text-transform:uppercase;
+  padding:3px 9px;border-radius:5px;cursor:pointer;transition:all .15s;user-select:none;
+  border:1px solid var(--border);background:var(--bg3);color:var(--text2);
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.b3-toggle:hover{color:var(--text);border-color:var(--accent,var(--blue))}
+.b3-toggle::before{content:'\25B8';display:inline-block;transition:transform .15s;color:var(--text3)}
+.b3-panel[data-collapsed="0"] .b3-toggle::before{transform:rotate(90deg)}
+.b3-panel[data-collapsed="1"] .b3-panel-head{border-bottom:none}
+.b3-panel[data-collapsed="1"] .b3-panel-body{display:none}
 .b3-chart-wrap{height:190px;padding:10px 14px 4px}
 .b3-legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:0 14px 8px}
 .b3-legend-item{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--text2)}
@@ -1869,6 +1881,26 @@ function b3YearsBlock(rows, colDefs, label){
   return '<details class="b3-years"><summary>'+esc(label||'Ver anos anteriores')+'</summary>'+tbl+'</details>';
 }
 
+// botão Ver/Ocultar dos painéis recolhíveis
+function b3ToggleBtn(){
+  return '<button type="button" class="b3-toggle" aria-expanded="false">Ver</button>';
+}
+
+// delegação de clique (registrada uma única vez)
+if(!window.__b3ToggleBound){
+  window.__b3ToggleBound = true;
+  document.addEventListener('click', function(e){
+    const btn = e.target.closest && e.target.closest('.b3-toggle');
+    if(!btn) return;
+    const panel = btn.closest('.b3-panel');
+    if(!panel) return;
+    const oculto = panel.getAttribute('data-collapsed') !== '0';
+    panel.setAttribute('data-collapsed', oculto ? '0' : '1');
+    btn.setAttribute('aria-expanded', oculto ? 'true' : 'false');
+    btn.textContent = oculto ? 'Ocultar' : 'Ver';
+  });
+}
+
 function b3LastRealRow(tbl){
   if(!tbl || !tbl.rows) return null;
   const reais = tbl.rows.filter(r=>!b3IsAgg(r[0]));
@@ -2040,8 +2072,9 @@ function renderB3(data){
 
   // ── volume médio diário (painel compacto, metade) ──
   if(data.volumeMedio && (data.volumeMedio.months || data.volumeMedio.years)){
-    h += '<div class="b3-panel" style="--accent:var(--blue)">';
-    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Volume Médio Diário</h3><span class="b3-panel-note">R$/US$ MM · var. % s/ mês ant.</span></div>';
+    h += '<div class="b3-panel" data-collapsed="1" style="--accent:var(--blue)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Volume Médio Diário</h3><div class="b3-head-right"><span class="b3-panel-note">R$/US$ MM · var. % s/ mês ant.</span>'+b3ToggleBtn()+'</div></div>';
+    h += '<div class="b3-panel-body">';
     h += b3BuildTable(data.volumeMedio.months?data.volumeMedio.months.rows:[], [
       {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
     ]);
@@ -2049,12 +2082,14 @@ function renderB3(data){
       {label:'R$ Milhões',type:'money'},{label:'Var. %',type:'var'},{label:'US$ Milhões',type:'moneyusd'},{label:'Var. %',type:'var'}
     ], 'Ver anos anteriores');
     h += '</div>';
+    h += '</div>';
   }
 
   // ── número de negócios (painel compacto, metade) ──
   if(data.negocios && (data.negocios.months || data.negocios.years)){
-    h += '<div class="b3-panel" style="--accent:var(--purple)">';
-    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Número de Negócios — Mensal</h3><span class="b3-panel-note">À vista · Termo · Opções · Bloco</span></div>';
+    h += '<div class="b3-panel" data-collapsed="1" style="--accent:var(--purple)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Número de Negócios — Mensal</h3><div class="b3-head-right"><span class="b3-panel-note">À vista · Termo · Opções · Bloco</span>'+b3ToggleBtn()+'</div></div>';
+    h += '<div class="b3-panel-body">';
     h += b3BuildTable(data.negocios.months?data.negocios.months.rows:[], [
       {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
     ]);
@@ -2062,18 +2097,21 @@ function renderB3(data){
       {label:'À Vista',type:'int'},{label:'Termo',type:'int'},{label:'Opções',type:'int'},{label:'Em Bloco',type:'int'},{label:'Total',type:'int'}
     ], 'Ver anos anteriores');
     h += '</div>';
+    h += '</div>';
   }
 
   // ── número de negócios médio diário (painel compacto, metade) ──
   if(data.negociosMedio && (data.negociosMedio.months || data.negociosMedio.years)){
-    h += '<div class="b3-panel" style="--accent:var(--purple)">';
-    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Negócios — Média Diária</h3></div>';
+    h += '<div class="b3-panel" data-collapsed="1" style="--accent:var(--purple)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Negócios — Média Diária</h3><div class="b3-head-right">'+b3ToggleBtn()+'</div></div>';
+    h += '<div class="b3-panel-body">';
     h += b3BuildTable(data.negociosMedio.months?data.negociosMedio.months.rows:[], [
       {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
     ]);
     h += b3YearsBlock(data.negociosMedio.years?data.negociosMedio.years.rows:[], [
       {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
     ], 'Ver anos anteriores');
+    h += '</div>';
     h += '</div>';
   }
 
