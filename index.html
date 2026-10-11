@@ -2050,6 +2050,41 @@ function renderB3(data){
 
   let h = '';
 
+  // ── movimentação de investidores estrangeiros (painel cheio, com gráfico) ──
+  if(data.estrangeiro && (data.estrangeiro.months || data.estrangeiro.years)){
+    h += '<div class="b3-panel full" style="--accent:var(--yellow)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-panel-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
+    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-estrangeiro"></canvas></div>';
+    h += b3BuildTable(data.estrangeiro.months?data.estrangeiro.months.rows:[], [
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
+    ]);
+    h += b3YearsBlock(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
+      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
+    ], 'Ver anos anteriores');
+    h += '</div>';
+  }
+
+  // ── participação por tipo de investidor (painel cheio, com gráfico) ──
+  if(data.participacao && (data.participacao.months || data.participacao.years)){
+    h += '<div class="b3-panel full" style="--accent:var(--green)">';
+    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Participação por Tipo de Investidor (%) — Mensal</h3></div>';
+    h += '<div class="b3-legend">'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--green)"></span>Pessoas Físicas</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--purple)"></span>Institucionais</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--blue)"></span>Estrangeiro</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--yellow)"></span>Inst. Financeiras</div>'+
+      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--text3)"></span>Outros</div>'+
+    '</div>';
+    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-part"></canvas></div>';
+    h += b3BuildTable(data.participacao.months?data.participacao.months.rows:[], [
+      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
+    ]);
+    h += b3YearsBlock(data.participacao.years?data.participacao.years.rows:[], [
+      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
+    ], 'Ver anos anteriores');
+    h += '</div>';
+  }
+
   // ── volume negociado (painel cheio, com gráfico) ──
   if(data.volume && (data.volume.months || data.volume.years)){
     h += '<div class="b3-panel full" style="--accent:var(--blue)">';
@@ -2106,41 +2141,6 @@ function renderB3(data){
       {label:'Negócios',type:'int'},{label:'Var. %',type:'var'}
     ], 'Ver anos anteriores');
     h += '</div>';
-    h += '</div>';
-  }
-
-  // ── participação por tipo de investidor (painel cheio, com gráfico) ──
-  if(data.participacao && (data.participacao.months || data.participacao.years)){
-    h += '<div class="b3-panel" style="--accent:var(--green)">';
-    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Participação por Tipo de Investidor (%) — Mensal</h3></div>';
-    h += '<div class="b3-legend">'+
-      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--green)"></span>Pessoas Físicas</div>'+
-      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--purple)"></span>Institucionais</div>'+
-      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--blue)"></span>Estrangeiro</div>'+
-      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--yellow)"></span>Inst. Financeiras</div>'+
-      '<div class="b3-legend-item"><span class="b3-legend-dot" style="background:var(--text3)"></span>Outros</div>'+
-    '</div>';
-    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-part"></canvas></div>';
-    h += b3BuildTable(data.participacao.months?data.participacao.months.rows:[], [
-      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
-    ]);
-    h += b3YearsBlock(data.participacao.years?data.participacao.years.rows:[], [
-      {label:'Pes. Físicas',type:'pct'},{label:'Institucionais',type:'pct'},{label:'Estrangeiro',type:'pct'},{label:'Inst. Financ.',type:'pct'},{label:'Outros',type:'pct'}
-    ], 'Ver anos anteriores');
-    h += '</div>';
-  }
-
-  // ── movimentação de investidores estrangeiros (painel cheio, com gráfico) ──
-  if(data.estrangeiro && (data.estrangeiro.months || data.estrangeiro.years)){
-    h += '<div class="b3-panel full" style="--accent:var(--yellow)">';
-    h += '<div class="b3-panel-head"><h3><span class="dot"></span>Movimentação de Investidores Estrangeiros (R$ Milhões)</h3><span class="b3-panel-note">Compras · Vendas · IPO/Follow-on · Saldo</span></div>';
-    h += '<div class="b3-chart-wrap"><canvas id="b3-chart-estrangeiro"></canvas></div>';
-    h += b3BuildTable(data.estrangeiro.months?data.estrangeiro.months.rows:[], [
-      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
-    ]);
-    h += b3YearsBlock(data.estrangeiro.years?data.estrangeiro.years.rows:[], [
-      {label:'Compras',type:'money'},{label:'Vendas',type:'money'},{label:'IPO/Follow-on',type:'money'},{label:'Saldo',type:'moneySaldo'}
-    ], 'Ver anos anteriores');
     h += '</div>';
   }
 
